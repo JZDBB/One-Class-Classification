@@ -21,29 +21,21 @@ class ALOCC_Model(object):
         self.nd_input_frame_size = nd_input_frame_size
         self.b_work_on_patch = kb_work_on_patch
         self.sample_dir = sample_dir
-
         self.sess = sess
         self.is_training = is_training
         self.pre = pre
-
         self.r_alpha = r_alpha
-
         self.batch_size = batch_size
         self.sample_num = sample_num
-
         self.input_height = input_height
         self.input_width = input_width
         self.output_height = output_height
         self.output_width = output_width
-
         self.z_dim = z_dim
-
         self.gf_dim = gf_dim
         self.df_dim = df_dim
-
         self.gfc_dim = gfc_dim
         self.dfc_dim = dfc_dim
-
         # batch normalization : deals with poor initialization helps gradient flow
         self.d_bn1 = batch_norm(name='d_bn1')
         self.d_bn2 = batch_norm(name='d_bn2')
@@ -56,13 +48,11 @@ class ALOCC_Model(object):
         self.g_bn4 = batch_norm(name='g_bn4')
         self.g_bn5 = batch_norm(name='g_bn5')
         self.g_bn6 = batch_norm(name='g_bn6')
-
         self.dataset_name = dataset_name
         self.dataset_address = dataset_address
         self.input_fname_pattern = input_fname_pattern
         self.checkpoint_dir = checkpoint_dir
         self.log_dir = log_dir
-
         self.attention_label = attention_label
 
         if self.is_training:
@@ -73,28 +63,12 @@ class ALOCC_Model(object):
             specific_idx = np.where(mnist.train.labels == self.attention_label)[0]
             self.data = mnist.train.images[specific_idx].reshape(-1, 28, 28, 1)
             self.c_dim = 1
-        elif self.dataset_name == 'UCSD':
-            self.nStride = n_stride
-            self.patch_size = nd_patch_size
-            self.patch_step = (n_stride, n_stride)
-            lst_image_paths = []
-            for s_image_dir_path in glob(os.path.join(self.dataset_address, self.input_fname_pattern)):
-                for sImageDirFiles in glob(os.path.join(s_image_dir_path + '/*')):
-                    lst_image_paths.append(sImageDirFiles)
-            self.dataAddress = lst_image_paths
-            lst_forced_fetch_data = [self.dataAddress[x] for x in
-                                     random.sample(range(0, len(lst_image_paths)), n_fetch_data)]
-
-            self.data = lst_forced_fetch_data
-            self.c_dim = 1
         elif self.dataset_name == 'cifar-10':
             self.data = read_data.read_data(self.attention_label)
             self.c_dim = 3
         else:
             assert ('Error in loading dataset')
-
         self.grayscale = (self.c_dim == 1)
-
         self.build_model()
 
     def build_model(self):
@@ -102,23 +76,13 @@ class ALOCC_Model(object):
         labels = tf.Variable(tf.ones([1, self.batch_size], tf.int64))
         self.inputs = tf.placeholder(tf.float32, [self.batch_size] + image_dims, name='real_images')
         self.sample_inputs = tf.placeholder(tf.float32, [self.sample_num] + image_dims, name='sample_inputs')
-
         inputs = self.inputs
         sample_inputs = self.sample_inputs
-
         self.z = tf.placeholder(tf.float32, [self.batch_size] + image_dims, name='z')
-
         self.G, self.feature = self.generator(self.z)
         self.D, self.D_logits = self.discriminator(inputs)
-
         self.sampler = self.sampler(self.z)
         self.D_, self.D_logits_ = self.discriminator(self.G, reuse=True)
-
-        # tesorboard setting
-        # self.z_sum = histogram_summary("z", self.z)
-        # self.d_sum = histogram_summary("d", self.D)
-        # self.d__sum = histogram_summary("d_", self.D_)
-        # self.G_sum = image_summary("G", self.G)
 
         # Simple GAN's losses
         self.d_loss_real = tf.reduce_mean(
