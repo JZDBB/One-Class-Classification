@@ -14,7 +14,7 @@ class ALOCC_Model(object):
                batch_size=128, sample_num = 128, attention_label=1, is_training=True, pre=True,
                z_dim=100, gf_dim=16, df_dim=16, gfc_dim=512, dfc_dim=512, c_dim=3,
                dataset_name=None, dataset_address=None, input_fname_pattern=None,
-               checkpoint_dir=None, log_dir=None, sample_dir=None, r_alpha = 0.2,
+               checkpoint_dir=None, log_dir=None, model_dir=None, sample_dir=None, r_alpha = 0.2,
                kb_work_on_patch=True, nd_input_frame_size=(240, 360), nd_patch_size=(10, 10), n_stride=1,
                n_fetch_data=10, n_per_itr_print_results=10):
         self.n_per_itr_print_results = n_per_itr_print_results
@@ -53,6 +53,7 @@ class ALOCC_Model(object):
         self.input_fname_pattern = input_fname_pattern
         self.checkpoint_dir = checkpoint_dir
         self.log_dir = log_dir
+        self.model_dir = model_dir
         self.attention_label = attention_label
 
         if self.is_training:
@@ -142,6 +143,10 @@ class ALOCC_Model(object):
             hae1 = lrelu(self.g_bn5(conv2d(hae0, self.df_dim * 4, name='g_encoder_h1_conv')))
             hae2 = lrelu(self.g_bn6(conv2d(hae1, self.df_dim * 8, name='g_encoder_h2_conv')))
 
+            flat = tf.contrib.layers.flatten(hae2)  # output [batch, 4*4*64]
+
+            feature = tf.layers.dense(flat, units=128, name='z_mean')
+
             h2, self.h2_w, self.h2_b = deconv2d(
                 hae2, [self.batch_size, s_h4, s_w4, self.gf_dim * 2], name='g_decoder_h1', with_w=True)
             h2 = tf.nn.relu(self.g_bn2(h2))
@@ -153,7 +158,7 @@ class ALOCC_Model(object):
             h4, self.h4_w, self.h4_b = deconv2d(
                 h3, [self.batch_size, s_h, s_w, self.c_dim], name='g_decoder_h00', with_w=True)
 
-            return tf.nn.tanh(h4, name='g_output'), hae2
+            return tf.nn.tanh(h4, name='g_output'), feature
 
         # =========================================================================================================
 
@@ -183,3 +188,141 @@ class ALOCC_Model(object):
                 h3, [self.batch_size, s_h, s_w, self.c_dim], name='g_decoder_h00', with_w=True)
 
             return tf.nn.tanh(h4, name='g_output')
+
+        # =========================================================================================================
+
+    def train(self, config):
+        train = layers.optimize_loss(self.pre_loss, tf.train.get_or_create_global_step(),
+                                     learning_rate=config.learning_rate, optimizer='Adam', update_ops=[])
+        d_optim = tf.train.RMSPropOptimizer(config.learning_rate).minimize(self.d_loss, var_list=self.d_vars)
+        g_optim = tf.train.RMSPropOptimizer(config.learning_rate).minimize(self.g_loss, var_list=self.g_vars)
+
+        try:
+            tf.global_variables_initializer().run()
+        except:
+            tf.initialize_all_variables().run()
+
+        self.saver = tf.train.Saver()
+
+        self.g_sum = merge_summary([self.g_r_loss_, self.g_loss_sum])
+        self.d_sum = merge_summary([self.d_loss_real_sum, self.d_loss_sum])
+
+        log_dir = os.path.join(self.log_dir, self.model_dir)
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)
+
+        self.writer = SummaryWriter(log_dir, self.sess.graph)
+        sample = self.data[0:self.sample_num]
+        sample_w_noise = get_noisy_data(self.data)
+        # export images
+        sample_inputs = np.array(sample).astype(np.float32)
+        scipy.misc.imsave('./{}/train_input_samples.jpg'.format(config.sample_dir), montage(sample_inputs))
+
+        # load previous checkpoint
+        counter = 1
+
+        for epoch in xrange(config.epoch):
+            print('Epoch ({}/{})-------------------------------------------------'.format(epoch, config.epoch))
+            batch_idxs = min(len(self.data), config.train_size) // config.batch_size
+            # for detecting valuable epoch that we must stop training step
+            # sample_input_for_test_each_train_step.npy
+            sample_test = np.load('SIFTETS.npy').reshape([504, 32, 32, 1])[0:128]
+
+            for idx in xrange(0, batch_idxs):
+                batch = self.data[idx * config.batch_size:(idx + 1) * config.batch_size]
+                batch_noise = sample_w_noise[idx * config.batch_size:(idx + 1) * config.batch_size]
+                batch_images = np.array(batch).astype(np.float32)
+                batch_noise_images = np.array(batch_noise).astype(np.float32)
+                batch_z = np.random.uniform(-1, 1, [config.batch_size, self.z_dim]).astype(np.float32)
+
+                if self.pre:
+                    if os.path.exists('cifar-10/checkpoint'):
+                        self.saver.restore(self.sess, "cifar-10/checkpoint/pre_model.ckpt")
+
+                    _, centerloss, recon = self.sess.run(
+                        [train, self.center_loss, self.g_r_loss],
+                        feed_dict={self.inputs: batch_images, self.z: batch_noise_images})
+
+                    counter += 1
+                    msg = "Epoch:[%2d][%4d/%4d]--> centerloss: %.8f, recon-loss: %.8f" % (epoch, idx, batch_idxs, centerloss, recon)
+                    print(msg)
+                    logging.info(msg)
+                    if counter % 100 == 0:
+                        self.saver.save(self.sess, "cifar-10/checkpoint/pre_model.ckpt")
+
+                else:
+                    if os.path.exists('model/checkpoint'):
+                        self.saver.restore(self.sess, "checkpoint/")
+                    # Update D network
+                    _, summary_str = self.sess.run([d_optim, self.d_sum],
+                                                   feed_dict={self.inputs: batch_images,
+                                                              self.z: batch_noise_images})
+                    self.writer.add_summary(summary_str, counter)
+
+                    # Update G network
+                    _, summary_str = self.sess.run([g_optim, self.g_sum],
+                                                   feed_dict={self.inputs: batch_images,
+                                                              self.z: batch_noise_images})
+                    self.writer.add_summary(summary_str, counter)
+
+                    # Run g_optim twice to make sure that d_loss does not go to zero (different from paper)
+                    _, summary_str = self.sess.run([g_optim, self.g_sum],
+                                                   feed_dict={self.inputs: batch_images,
+                                                              self.z: batch_noise_images})
+                    self.writer.add_summary(summary_str, counter)
+
+                    errD_fake = self.d_loss_fake.eval({self.z: batch_noise_images})
+                    errD_real = self.d_loss_real.eval({self.inputs: batch_images})
+                    errG = self.g_loss.eval({self.inputs: batch_images, self.z: batch_noise_images})
+
+                    counter += 1
+
+                    msg = "Epoch:[%2d][%4d/%4d]--> d_loss: %.8f, g_loss: %.8f" % (
+                        epoch, idx, batch_idxs, errD_fake + errD_real, errG)
+                    print(msg)
+                    logging.info(msg)
+                if not self.pre:
+                    if np.mod(counter, self.n_per_itr_print_results) == 0:
+                        if config.dataset == 'mnist' or 'cifar-10':
+                            samples, d_loss, g_loss = self.sess.run(
+                                [self.sampler, self.d_loss, self.g_loss],
+                                feed_dict={
+                                    self.z: sample_inputs,
+                                    self.inputs: sample_inputs
+                                }
+                            )
+                            manifold_h = int(np.ceil(np.sqrt(samples.shape[0])))
+                            manifold_w = int(np.floor(np.sqrt(samples.shape[0])))
+                            save_images(samples, [manifold_h, manifold_w],
+                                        './{}/train_{:02d}_{:04d}.png'.format(config.sample_dir, epoch, idx))
+                            print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss))
+                        # ====================================================================================================
+                        else:
+                            # try:
+                            samples, d_loss, g_loss = self.sess.run(
+                                [self.sampler, self.d_loss, self.g_loss],
+                                feed_dict={
+                                    self.z: sample_inputs,
+                                    self.inputs: sample_inputs,
+                                },
+                            )
+
+                            sample_test_out = self.sess.run(
+                                [self.sampler],
+                                feed_dict={
+                                    self.z: sample_test
+                                },
+                            )
+                            # export images
+                            scipy.misc.imsave('./{}/z_test_{:02d}_{:04d}.png'.format(config.sample_dir, epoch, idx),
+                                              montage(samples[:, :, :, 0]))
+
+                            # export images
+                            scipy.misc.imsave('./{}/train_{:02d}_{:04d}.png'.format(config.sample_dir, epoch, idx),
+                                              montage(samples[:, :, :, 0]))
+
+                            msg = "[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss)
+                            print(msg)
+                            logging.info(msg)
+
+                            self.save(config.checkpoint_dir, epoch)
