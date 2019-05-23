@@ -1,0 +1,159 @@
+WARNING:matplotlib.image:Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
+WARNING:matplotlib.image:Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
+WARNING:matplotlib.image:Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
+WARNING:matplotlib.image:Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
+INFO:root:Epoch:[ 0][   0/  39]--> d_loss: 1.46213078, g_loss: 348.39532471
+INFO:root:Epoch:[ 0][   1/  39]--> d_loss: 1.44948304, g_loss: 377.19921875
+INFO:root:Epoch:[ 0][   2/  39]--> d_loss: 1.44384944, g_loss: 348.59979248
+INFO:root:Epoch:[ 0][   3/  39]--> d_loss: 1.43830907, g_loss: 340.04275513
+INFO:root:Epoch:[ 0][   4/  39]--> d_loss: 1.43311429, g_loss: 362.37091064
+INFO:root:Epoch:[ 0][   5/  39]--> d_loss: 1.42432749, g_loss: 339.76913452
+INFO:root:Epoch:[ 0][   6/  39]--> d_loss: 1.41127634, g_loss: 355.21539307
+INFO:root:Epoch:[ 0][   7/  39]--> d_loss: 1.39261007, g_loss: 366.43606567
+INFO:root:Epoch:[ 0][   8/  39]--> d_loss: 1.38332677, g_loss: 357.86813354
+INFO:root:Epoch:[ 0][   9/  39]--> d_loss: 1.37148345, g_loss: 351.35964966
+INFO:root:Epoch:[ 0][  10/  39]--> d_loss: 1.35268795, g_loss: 367.55282593
+INFO:root:Epoch:[ 0][  11/  39]--> d_loss: 1.34512007, g_loss: 356.09307861
+INFO:root:Epoch:[ 0][  12/  39]--> d_loss: 1.33000195, g_loss: 344.96832275
+INFO:root:Epoch:[ 0][  13/  39]--> d_loss: 1.31904769, g_loss: 352.85961914
+INFO:root:Epoch:[ 0][  14/  39]--> d_loss: 1.30688810, g_loss: 367.98239136
+INFO:root:Epoch:[ 0][  15/  39]--> d_loss: 1.29871368, g_loss: 358.06298828
+INFO:root:Epoch:[ 0][  16/  39]--> d_loss: 1.28833628, g_loss: 359.88513184
+INFO:root:Epoch:[ 0][  17/  39]--> d_loss: 1.27734375, g_loss: 347.37637329
+INFO:root:Epoch:[ 0][  18/  39]--> d_loss: 1.27471185, g_loss: 338.81011963
+INFO:root:Epoch:[ 0][  19/  39]--> d_loss: 1.27412856, g_loss: 362.54031372
+INFO:root:Epoch:[ 0][  20/  39]--> d_loss: 1.26874959, g_loss: 347.07495117
+INFO:root:Epoch:[ 0][  21/  39]--> d_loss: 1.26413381, g_loss: 345.33273315
+INFO:root:Epoch:[ 0][  22/  39]--> d_loss: 1.24561870, g_loss: 353.11419678
+INFO:root:Epoch:[ 0][  23/  39]--> d_loss: 1.23763084, g_loss: 376.27807617
+INFO:root:Epoch:[ 0][  24/  39]--> d_loss: 1.24072063, g_loss: 349.18795776
+INFO:root:Epoch:[ 0][  25/  39]--> d_loss: 1.28236055, g_loss: 363.18014526
+INFO:root:Epoch:[ 0][  26/  39]--> d_loss: 1.24918258, g_loss: 350.53671265
+INFO:root:Epoch:[ 0][  27/  39]--> d_loss: 1.22541714, g_loss: 350.89102173
+INFO:root:Epoch:[ 0][  28/  39]--> d_loss: 1.22170222, g_loss: 376.08703613
+INFO:root:Epoch:[ 0][  29/  39]--> d_loss: 1.21627891, g_loss: 329.23294067
+INFO:root:Epoch:[ 0][  30/  39]--> d_loss: 1.27255011, g_loss: 352.69415283
+INFO:root:Epoch:[ 0][  31/  39]--> d_loss: 1.22006655, g_loss: 356.22259521
+INFO:root:Epoch:[ 0][  32/  39]--> d_loss: 1.20039332, g_loss: 334.98162842
+WARNING:matplotlib.image:Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
+WARNING:tensorflow:Tensor._shape is private, use Tensor.shape instead. Tensor._shape will eventually be removed.
+WARNING:tensorflow:Tensor._shape is private, use Tensor.shape instead. Tensor._shape will eventually be removed.
+WARNING:matplotlib.image:Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
+WARNING:tensorflow:Tensor._shape is private, use Tensor.shape instead. Tensor._shape will eventually be removed.
+WARNING:tensorflow:Tensor._shape is private, use Tensor.shape instead. Tensor._shape will eventually be removed.
+WARNING:tensorflow:Tensor._shape is private, use Tensor.shape instead. Tensor._shape will eventually be removed.
+WARNING:tensorflow:Tensor._shape is private, use Tensor.shape instead. Tensor._shape will eventually be removed.
+WARNING:tensorflow:Tensor._shape is private, use Tensor.shape instead. Tensor._shape will eventually be removed.
+WARNING:tensorflow:Tensor._shape is private, use Tensor.shape instead. Tensor._shape will eventually be removed.
+WARNING:tensorflow:Tensor._shape is private, use Tensor.shape instead. Tensor._shape will eventually be removed.
+WARNING:tensorflow:Tensor._shape is private, use Tensor.shape instead. Tensor._shape will eventually be removed.
+WARNING:matplotlib.image:Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
+WARNING:matplotlib.image:Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
+INFO:root:Epoch:[ 0][   0/  39]--> centerloss: 17380.30468750, recon-loss: 21696.74609375
+INFO:root:Epoch:[ 0][   1/  39]--> centerloss: 18806.75000000, recon-loss: 4786.94238281
+INFO:root:Epoch:[ 0][   2/  39]--> centerloss: 17365.09765625, recon-loss: 2997.15283203
+INFO:root:Epoch:[ 0][   3/  39]--> centerloss: 16925.39257812, recon-loss: 2918.41015625
+INFO:root:Epoch:[ 0][   4/  39]--> centerloss: 18029.75781250, recon-loss: 2364.05664062
+INFO:root:Epoch:[ 0][   5/  39]--> centerloss: 16893.37304688, recon-loss: 1579.11352539
+INFO:root:Epoch:[ 0][   6/  39]--> centerloss: 17657.42578125, recon-loss: 1200.93652344
+INFO:root:Epoch:[ 0][   7/  39]--> centerloss: 18211.96093750, recon-loss: 1197.64135742
+INFO:root:Epoch:[ 0][   8/  39]--> centerloss: 17784.28906250, recon-loss: 1144.66650391
+INFO:root:Epoch:[ 0][   9/  39]--> centerloss: 17458.91210938, recon-loss: 1013.21313477
+INFO:root:Epoch:[ 0][  10/  39]--> centerloss: 18268.87500000, recon-loss: 837.70605469
+INFO:root:Epoch:[ 0][  11/  39]--> centerloss: 17700.03515625, recon-loss: 733.85833740
+INFO:root:Epoch:[ 0][  12/  39]--> centerloss: 17148.96093750, recon-loss: 662.10327148
+INFO:root:Epoch:[ 0][  13/  39]--> centerloss: 17545.09179688, recon-loss: 606.37182617
+INFO:root:Epoch:[ 0][  14/  39]--> centerloss: 18304.58593750, recon-loss: 575.47570801
+INFO:root:Epoch:[ 0][  15/  39]--> centerloss: 17815.18359375, recon-loss: 504.50369263
+INFO:root:Epoch:[ 0][  16/  39]--> centerloss: 17910.32031250, recon-loss: 466.41729736
+INFO:root:Epoch:[ 0][  17/  39]--> centerloss: 17291.29101562, recon-loss: 466.90747070
+INFO:root:Epoch:[ 0][  18/  39]--> centerloss: 16868.11718750, recon-loss: 391.28067017
+INFO:root:Epoch:[ 0][  19/  39]--> centerloss: 18058.46484375, recon-loss: 344.23208618
+INFO:root:Epoch:[ 0][  20/  39]--> centerloss: 17290.88867188, recon-loss: 345.92434692
+INFO:root:Epoch:[ 0][  21/  39]--> centerloss: 17207.46679688, recon-loss: 321.20013428
+INFO:root:Epoch:[ 0][  22/  39]--> centerloss: 17598.64453125, recon-loss: 309.05862427
+INFO:root:Epoch:[ 0][  23/  39]--> centerloss: 18760.40820312, recon-loss: 274.79199219
+INFO:root:Epoch:[ 0][  24/  39]--> centerloss: 17411.00585938, recon-loss: 237.67678833
+INFO:root:Epoch:[ 0][  25/  39]--> centerloss: 18111.94531250, recon-loss: 239.64474487
+INFO:root:Epoch:[ 0][  26/  39]--> centerloss: 17481.95703125, recon-loss: 216.48629761
+INFO:root:Epoch:[ 0][  27/  39]--> centerloss: 17501.55468750, recon-loss: 216.41439819
+INFO:root:Epoch:[ 0][  28/  39]--> centerloss: 18762.32226562, recon-loss: 190.90699768
+INFO:root:Epoch:[ 0][  29/  39]--> centerloss: 16422.88085938, recon-loss: 184.15980530
+INFO:root:Epoch:[ 0][  30/  39]--> centerloss: 17597.65820312, recon-loss: 159.73271179
+INFO:root:Epoch:[ 0][  31/  39]--> centerloss: 17773.25781250, recon-loss: 164.79309082
+INFO:root:Epoch:[ 0][  32/  39]--> centerloss: 16712.56250000, recon-loss: 140.07479858
+INFO:root:Epoch:[ 0][  33/  39]--> centerloss: 17478.02148438, recon-loss: 146.99812317
+INFO:root:Epoch:[ 0][  34/  39]--> centerloss: 17881.97460938, recon-loss: 127.36846161
+INFO:root:Epoch:[ 0][  35/  39]--> centerloss: 16690.05664062, recon-loss: 133.47106934
+INFO:root:Epoch:[ 0][  36/  39]--> centerloss: 18768.39062500, recon-loss: 118.65690613
+INFO:root:Epoch:[ 0][  37/  39]--> centerloss: 16460.96093750, recon-loss: 116.08522034
+INFO:root:Epoch:[ 0][  38/  39]--> centerloss: 18952.96679688, recon-loss: 108.75621033
+INFO:root:Epoch:[ 1][   0/  39]--> centerloss: 17175.59375000, recon-loss: 101.22328186
+INFO:root:Epoch:[ 1][   1/  39]--> centerloss: 18614.88085938, recon-loss: 104.11004639
+INFO:root:Epoch:[ 1][   2/  39]--> centerloss: 17201.66992188, recon-loss: 109.99526978
+INFO:root:Epoch:[ 1][   3/  39]--> centerloss: 16782.70703125, recon-loss: 88.48271942
+INFO:root:Epoch:[ 1][   4/  39]--> centerloss: 17899.90625000, recon-loss: 90.02230835
+INFO:root:Epoch:[ 1][   5/  39]--> centerloss: 16785.25000000, recon-loss: 82.74400330
+INFO:root:Epoch:[ 1][   6/  39]--> centerloss: 17559.75585938, recon-loss: 83.11990356
+INFO:root:Epoch:[ 1][   7/  39]--> centerloss: 18124.96093750, recon-loss: 84.76483154
+INFO:root:Epoch:[ 1][   8/  39]--> centerloss: 17710.83593750, recon-loss: 74.26362610
+INFO:root:Epoch:[ 1][   9/  39]--> centerloss: 17395.51171875, recon-loss: 76.07363892
+INFO:root:Epoch:[ 1][  10/  39]--> centerloss: 18212.32031250, recon-loss: 70.13117981
+INFO:root:Epoch:[ 1][  11/  39]--> centerloss: 17651.26367188, recon-loss: 70.02778625
+INFO:root:Epoch:[ 1][  12/  39]--> centerloss: 17107.19531250, recon-loss: 61.18127060
+INFO:root:Epoch:[ 1][  13/  39]--> centerloss: 17507.58007812, recon-loss: 58.86361694
+INFO:root:Epoch:[ 1][  14/  39]--> centerloss: 18271.43164062, recon-loss: 63.78949738
+INFO:root:Epoch:[ 1][  15/  39]--> centerloss: 17786.69140625, recon-loss: 56.30138779
+INFO:root:Epoch:[ 1][  16/  39]--> centerloss: 17884.48437500, recon-loss: 55.22163391
+INFO:root:Epoch:[ 1][  17/  39]--> centerloss: 17268.97265625, recon-loss: 63.25019836
+INFO:root:Epoch:[ 1][  18/  39]--> centerloss: 16848.49218750, recon-loss: 56.96768570
+WARNING:matplotlib.image:Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
+INFO:root:Epoch:[ 0][   0/  39]--> centerloss: 17382.50390625, recon-loss: 31892.72656250
+INFO:root:Epoch:[ 0][   1/  39]--> centerloss: 18809.66406250, recon-loss: 6988.49169922
+INFO:root:Epoch:[ 0][   2/  39]--> centerloss: 17366.84179688, recon-loss: 3640.26562500
+INFO:root:Epoch:[ 0][   3/  39]--> centerloss: 16928.06054688, recon-loss: 1912.49963379
+INFO:root:Epoch:[ 0][   4/  39]--> centerloss: 18033.06250000, recon-loss: 1530.21777344
+INFO:root:Epoch:[ 0][   5/  39]--> centerloss: 16896.25000000, recon-loss: 1140.55517578
+INFO:root:Epoch:[ 0][   6/  39]--> centerloss: 17660.50976562, recon-loss: 966.39196777
+INFO:root:Epoch:[ 0][   7/  39]--> centerloss: 18215.96289062, recon-loss: 920.56787109
+INFO:root:Epoch:[ 0][   8/  39]--> centerloss: 17788.24804688, recon-loss: 804.08728027
+INFO:root:Epoch:[ 0][   9/  39]--> centerloss: 17461.98242188, recon-loss: 689.92785645
+INFO:root:Epoch:[ 0][  10/  39]--> centerloss: 18271.17968750, recon-loss: 598.55963135
+INFO:root:Epoch:[ 0][  11/  39]--> centerloss: 17701.47656250, recon-loss: 488.56341553
+INFO:root:Epoch:[ 0][  12/  39]--> centerloss: 17149.76367188, recon-loss: 425.36352539
+INFO:root:Epoch:[ 0][  13/  39]--> centerloss: 17545.69140625, recon-loss: 409.76092529
+INFO:root:Epoch:[ 0][  14/  39]--> centerloss: 18305.10156250, recon-loss: 363.42010498
+INFO:root:Epoch:[ 0][  15/  39]--> centerloss: 17815.42968750, recon-loss: 334.43759155
+INFO:root:Epoch:[ 0][  16/  39]--> centerloss: 17910.28320312, recon-loss: 291.13629150
+INFO:root:Epoch:[ 0][  17/  39]--> centerloss: 17291.00000000, recon-loss: 315.12335205
+INFO:root:Epoch:[ 0][  18/  39]--> centerloss: 16867.65820312, recon-loss: 269.56341553
+INFO:root:Epoch:[ 0][  19/  39]--> centerloss: 18057.89453125, recon-loss: 230.01599121
+INFO:root:Epoch:[ 0][  20/  39]--> centerloss: 17290.23046875, recon-loss: 235.79080200
+INFO:root:Epoch:[ 0][  21/  39]--> centerloss: 17206.95312500, recon-loss: 204.19071960
+INFO:root:Epoch:[ 0][  22/  39]--> centerloss: 17598.07812500, recon-loss: 202.30184937
+INFO:root:Epoch:[ 0][  23/  39]--> centerloss: 18759.77734375, recon-loss: 188.27720642
+INFO:root:Epoch:[ 0][  24/  39]--> centerloss: 17410.38085938, recon-loss: 154.05249023
+INFO:root:Epoch:[ 0][  25/  39]--> centerloss: 18111.29687500, recon-loss: 167.14094543
+INFO:root:Epoch:[ 0][  26/  39]--> centerloss: 17481.38671875, recon-loss: 149.80271912
+INFO:root:Epoch:[ 0][  27/  39]--> centerloss: 17500.99414062, recon-loss: 149.31793213
+INFO:root:Epoch:[ 0][  28/  39]--> centerloss: 18761.79687500, recon-loss: 131.27589417
+INFO:root:Epoch:[ 0][  29/  39]--> centerloss: 16422.46484375, recon-loss: 128.79931641
+INFO:root:Epoch:[ 0][  30/  39]--> centerloss: 17597.21875000, recon-loss: 106.50021362
+INFO:root:Epoch:[ 0][  31/  39]--> centerloss: 17772.80078125, recon-loss: 113.97140503
+INFO:root:Epoch:[ 0][  32/  39]--> centerloss: 16712.15039062, recon-loss: 99.04498291
+INFO:root:Epoch:[ 0][  33/  39]--> centerloss: 17477.61718750, recon-loss: 93.20225525
+INFO:root:Epoch:[ 0][  34/  39]--> centerloss: 17881.56054688, recon-loss: 84.49955750
+INFO:root:Epoch:[ 0][  35/  39]--> centerloss: 16689.69531250, recon-loss: 100.26222229
+INFO:root:Epoch:[ 0][  36/  39]--> centerloss: 18768.00390625, recon-loss: 85.47412109
+INFO:root:Epoch:[ 0][  37/  39]--> centerloss: 16460.61523438, recon-loss: 80.64107513
+INFO:root:Epoch:[ 0][  38/  39]--> centerloss: 18952.58984375, recon-loss: 74.12821198
+INFO:root:Epoch:[ 1][   0/  39]--> centerloss: 17175.24218750, recon-loss: 69.69915009
+INFO:root:Epoch:[ 1][   1/  39]--> centerloss: 18614.52734375, recon-loss: 72.16111755
+INFO:root:Epoch:[ 1][   2/  39]--> centerloss: 17201.37109375, recon-loss: 77.89658356
+INFO:root:Epoch:[ 1][   3/  39]--> centerloss: 16782.44335938, recon-loss: 58.53476715
+INFO:root:Epoch:[ 1][   4/  39]--> centerloss: 17899.65429688, recon-loss: 67.84442139
+INFO:root:Epoch:[ 1][   5/  39]--> centerloss: 16785.00781250, recon-loss: 51.85094452
+INFO:root:Epoch:[ 1][   6/  39]--> centerloss: 17559.50000000, recon-loss: 60.13847351
+INFO:root:Epoch:[ 1][   7/  39]--> centerloss: 18124.69531250, recon-loss: 62.88777542
+INFO:root:Epoch:[ 1][   8/  39]--> centerloss: 17710.56835938, recon-loss: 53.52288055
+INFO:root:Epoch:[ 1][   9/  39]--> centerloss: 17395.26953125, recon-loss: 56.53449249

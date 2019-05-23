@@ -21,7 +21,6 @@ flags.DEFINE_string("dataset_address", "./dataset/", "The path of dataset")
 flags.DEFINE_string("input_fname_pattern", "*", "Glob pattern of filename of input images [*]")
 flags.DEFINE_string("checkpoint_dir", "checkpoint", "Directory name to save the checkpoints [checkpoint]")
 flags.DEFINE_string("log_dir", "log", "Directory name to save the log [log]")
-flags.DEFINE_string("model_dir", "cifar-10", "Directory name to save the log [log]")
 flags.DEFINE_string("sample_dir", "samples", "Directory name to save the image samples [samples]")
 flags.DEFINE_boolean("train", True, "True for training, False for testing [False]")
 flags.DEFINE_boolean("pretrain", True, "True for pretrain, False for training")
@@ -98,7 +97,6 @@ def main(_):
                     is_training = FLAGS.train,
                     pre=FLAGS.pretrain,
                     log_dir=FLAGS.log_dir,
-                    model_dir=FLAGS.model_dir,
                     sample_dir=FLAGS.sample_dir,
                     nd_patch_size=nd_slice_size,
                     n_stride=n_stride,

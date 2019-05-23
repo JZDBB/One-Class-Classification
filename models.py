@@ -14,7 +14,7 @@ class ALOCC_Model(object):
                batch_size=128, sample_num = 128, attention_label=1, is_training=True, pre=True,
                z_dim=100, gf_dim=16, df_dim=16, gfc_dim=512, dfc_dim=512, c_dim=3,
                dataset_name=None, dataset_address=None, input_fname_pattern=None,
-               checkpoint_dir=None, log_dir=None, model_dir=None, sample_dir=None, r_alpha = 0.2,
+               checkpoint_dir=None, log_dir=None, sample_dir=None, r_alpha = 0.2,
                kb_work_on_patch=True, nd_input_frame_size=(240, 360), nd_patch_size=(10, 10), n_stride=1,
                n_fetch_data=10, n_per_itr_print_results=10):
         self.n_per_itr_print_results = n_per_itr_print_results
@@ -53,7 +53,6 @@ class ALOCC_Model(object):
         self.input_fname_pattern = input_fname_pattern
         self.checkpoint_dir = checkpoint_dir
         self.log_dir = log_dir
-        self.model_dir = model_dir
         self.attention_label = attention_label
 
         if self.is_training:
@@ -74,7 +73,7 @@ class ALOCC_Model(object):
 
     def build_model(self):
         image_dims = [self.input_height, self.input_width, self.c_dim]
-        labels = tf.Variable(tf.ones([1, self.batch_size], tf.int64))
+        labels = tf.Variable(tf.zeros([1, self.batch_size], tf.int64))
         self.inputs = tf.placeholder(tf.float32, [self.batch_size] + image_dims, name='real_images')
         self.sample_inputs = tf.placeholder(tf.float32, [self.sample_num] + image_dims, name='sample_inputs')
         inputs = self.inputs
@@ -104,6 +103,9 @@ class ALOCC_Model(object):
         self.g_loss = self.g_loss + self.g_r_loss * self.r_alpha
         self.d_loss = self.d_loss_real + self.d_loss_fake
 
+        self.pre_loss_sum = scalar_summary("pre_loss_sum", self.pre_loss)
+        # self.pre_loss_recon_sum = scalar_summary("pre_loss_recon", self.g_r_loss)
+        self.pre_center_loss = scalar_summary("pre_center_loss", self.center_loss)
         self.d_loss_real_sum = scalar_summary("d_loss_real", self.d_loss_real)
         self.d_loss_fake_sum = scalar_summary("d_loss_fake", self.d_loss_fake)
         self.g_loss_sum = scalar_summary("g_loss", self.g_loss)
@@ -127,7 +129,7 @@ class ALOCC_Model(object):
             h3 = lrelu(self.d_bn3(conv2d(h2, self.df_dim * 8, name='d_h3_conv')))
             h4 = linear(tf.reshape(h3, [self.batch_size, -1]), 1, 'd_h3_lin')
             h5 = tf.nn.sigmoid(h4, name='d_output')
-            return h5, h4
+            return h4, h5
 
         # =========================================================================================================
 
@@ -143,12 +145,13 @@ class ALOCC_Model(object):
             hae1 = lrelu(self.g_bn5(conv2d(hae0, self.df_dim * 4, name='g_encoder_h1_conv')))
             hae2 = lrelu(self.g_bn6(conv2d(hae1, self.df_dim * 8, name='g_encoder_h2_conv')))
 
-            flat = tf.contrib.layers.flatten(hae2)  # output [batch, 4*4*64]
-
+            flat = tf.contrib.layers.flatten(hae2)
             feature = tf.layers.dense(flat, units=128, name='z_mean')
+            z_develop = tf.layers.dense(feature, units=4 * 4 * 128)
+            decode_in = tf.nn.relu(tf.reshape(z_develop, [-1, 4, 4, 128]))
 
             h2, self.h2_w, self.h2_b = deconv2d(
-                hae2, [self.batch_size, s_h4, s_w4, self.gf_dim * 2], name='g_decoder_h1', with_w=True)
+                decode_in, [self.batch_size, s_h4, s_w4, self.gf_dim * 2], name='g_decoder_h1', with_w=True)
             h2 = tf.nn.relu(self.g_bn2(h2))
 
             h3, self.h3_w, self.h3_b = deconv2d(
@@ -159,8 +162,6 @@ class ALOCC_Model(object):
                 h3, [self.batch_size, s_h, s_w, self.c_dim], name='g_decoder_h00', with_w=True)
 
             return tf.nn.tanh(h4, name='g_output'), feature
-
-        # =========================================================================================================
 
     def sampler(self, z, y=None):
         with tf.variable_scope("generator") as scope:
@@ -176,6 +177,10 @@ class ALOCC_Model(object):
             hae1 = lrelu(self.g_bn5(conv2d(hae0, self.df_dim * 4, name='g_encoder_h1_conv')))
             hae2 = lrelu(self.g_bn6(conv2d(hae1, self.df_dim * 8, name='g_encoder_h2_conv')))
 
+            flat = tf.contrib.layers.flatten(hae2)
+            feature = tf.layers.dense(flat, units=128, name='z_mean')
+            z_develop = tf.layers.dense(feature, units=4 * 4 * 128)
+            decode_in = tf.nn.relu(tf.reshape(z_develop, [-1, 4, 4, 128]))
             h2, self.h2_w, self.h2_b = deconv2d(
                 hae2, [self.batch_size, s_h4, s_w4, self.gf_dim * 2], name='g_decoder_h1', with_w=True)
             h2 = tf.nn.relu(self.g_bn2(h2))
@@ -226,7 +231,7 @@ class ALOCC_Model(object):
             batch_idxs = min(len(self.data), config.train_size) // config.batch_size
             # for detecting valuable epoch that we must stop training step
             # sample_input_for_test_each_train_step.npy
-            sample_test = np.load('SIFTETS.npy').reshape([504, 32, 32, 1])[0:128]
+            # sample_test = np.load('SIFTETS.npy').reshape([504, 32, 32, 1])[0:128]
 
             for idx in xrange(0, batch_idxs):
                 batch = self.data[idx * config.batch_size:(idx + 1) * config.batch_size]
@@ -236,39 +241,39 @@ class ALOCC_Model(object):
                 batch_z = np.random.uniform(-1, 1, [config.batch_size, self.z_dim]).astype(np.float32)
 
                 if self.pre:
-                    if os.path.exists('cifar-10/checkpoint'):
-                        self.saver.restore(self.sess, "cifar-10/checkpoint/pre_model.ckpt")
+                    if os.path.exists('cifar-10/pre/checkpoint'):
+                        self.saver.restore(self.sess, "cifar-10/pre/pre_model.ckpt")
 
-                    _, centerloss, recon = self.sess.run(
-                        [train, self.center_loss, self.g_r_loss],
+                    _, _, summary_str = self.sess.run([train, self.centers_update_op, self.pre_loss],
                         feed_dict={self.inputs: batch_images, self.z: batch_noise_images})
 
+                    # self.writer.add_summary(summary_str, counter)
                     counter += 1
+
+                    recon = self.center_loss.eval({self.inputs: batch_images, self.z: batch_noise_images})
+                    centerloss = self.g_r_loss.eval({self.inputs: batch_images, self.z: batch_noise_images})
                     msg = "Epoch:[%2d][%4d/%4d]--> centerloss: %.8f, recon-loss: %.8f" % (epoch, idx, batch_idxs, centerloss, recon)
                     print(msg)
                     logging.info(msg)
                     if counter % 100 == 0:
-                        self.saver.save(self.sess, "cifar-10/checkpoint/pre_model.ckpt")
+                        self.saver.save(self.sess, "cifar-10/pre/pre_model.ckpt")
 
                 else:
-                    if os.path.exists('model/checkpoint'):
-                        self.saver.restore(self.sess, "checkpoint/")
+                    if os.path.exists('cifar-10/checkpoint'):
+                        self.saver.restore(self.sess, "checkpoint/model.ckpt")
                     # Update D network
                     _, summary_str = self.sess.run([d_optim, self.d_sum],
-                                                   feed_dict={self.inputs: batch_images,
-                                                              self.z: batch_noise_images})
+                                                   feed_dict={self.inputs: batch_images, self.z: batch_noise_images})
                     self.writer.add_summary(summary_str, counter)
 
                     # Update G network
                     _, summary_str = self.sess.run([g_optim, self.g_sum],
-                                                   feed_dict={self.inputs: batch_images,
-                                                              self.z: batch_noise_images})
+                                                   feed_dict={self.inputs: batch_images, self.z: batch_noise_images})
                     self.writer.add_summary(summary_str, counter)
 
                     # Run g_optim twice to make sure that d_loss does not go to zero (different from paper)
                     _, summary_str = self.sess.run([g_optim, self.g_sum],
-                                                   feed_dict={self.inputs: batch_images,
-                                                              self.z: batch_noise_images})
+                                                   feed_dict={self.inputs: batch_images, self.z: batch_noise_images})
                     self.writer.add_summary(summary_str, counter)
 
                     errD_fake = self.d_loss_fake.eval({self.z: batch_noise_images})
@@ -276,53 +281,35 @@ class ALOCC_Model(object):
                     errG = self.g_loss.eval({self.inputs: batch_images, self.z: batch_noise_images})
 
                     counter += 1
-
-                    msg = "Epoch:[%2d][%4d/%4d]--> d_loss: %.8f, g_loss: %.8f" % (
-                        epoch, idx, batch_idxs, errD_fake + errD_real, errG)
+                    msg = "Epoch:[%2d][%4d/%4d]--> d_loss: %.8f, g_loss: %.8f" % (epoch, idx, batch_idxs, errD_fake + errD_real, errG)
                     print(msg)
                     logging.info(msg)
                 if not self.pre:
                     if np.mod(counter, self.n_per_itr_print_results) == 0:
-                        if config.dataset == 'mnist' or 'cifar-10':
-                            samples, d_loss, g_loss = self.sess.run(
-                                [self.sampler, self.d_loss, self.g_loss],
-                                feed_dict={
-                                    self.z: sample_inputs,
-                                    self.inputs: sample_inputs
-                                }
-                            )
-                            manifold_h = int(np.ceil(np.sqrt(samples.shape[0])))
-                            manifold_w = int(np.floor(np.sqrt(samples.shape[0])))
-                            save_images(samples, [manifold_h, manifold_w],
-                                        './{}/train_{:02d}_{:04d}.png'.format(config.sample_dir, epoch, idx))
-                            print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss))
-                        # ====================================================================================================
-                        else:
-                            # try:
-                            samples, d_loss, g_loss = self.sess.run(
-                                [self.sampler, self.d_loss, self.g_loss],
-                                feed_dict={
-                                    self.z: sample_inputs,
-                                    self.inputs: sample_inputs,
-                                },
-                            )
+                        samples, d_loss, g_loss = self.sess.run(
+                            [self.sampler, self.d_loss, self.g_loss],
+                            feed_dict={
+                                self.z: sample_inputs,
+                                self.inputs: sample_inputs
+                            }
+                        )
+                        manifold_h = int(np.ceil(np.sqrt(samples.shape[0])))
+                        manifold_w = int(np.floor(np.sqrt(samples.shape[0])))
+                        save_images(samples, [manifold_h, manifold_w],
+                                    './{}/train_{:02d}_{:04d}.png'.format(config.sample_dir, epoch, idx))
+                        print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss))
 
-                            sample_test_out = self.sess.run(
-                                [self.sampler],
-                                feed_dict={
-                                    self.z: sample_test
-                                },
-                            )
-                            # export images
-                            scipy.misc.imsave('./{}/z_test_{:02d}_{:04d}.png'.format(config.sample_dir, epoch, idx),
-                                              montage(samples[:, :, :, 0]))
+                    self.save(config.checkpoint_dir, epoch)
 
-                            # export images
-                            scipy.misc.imsave('./{}/train_{:02d}_{:04d}.png'.format(config.sample_dir, epoch, idx),
-                                              montage(samples[:, :, :, 0]))
+    @property
+    def model_dir(self):
+        return "{}_{}_{}_{}".format(self.dataset_name, self.batch_size, self.output_height, self.output_width)
 
-                            msg = "[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss)
-                            print(msg)
-                            logging.info(msg)
+    def save(self, checkpoint_dir, step):
+        model_name = "ALOCC_Model.model"
+        checkpoint_dir = os.path.join(checkpoint_dir, self.model_dir)
 
-                            self.save(config.checkpoint_dir, epoch)
+        if not os.path.exists(checkpoint_dir):
+            os.makedirs(checkpoint_dir)
+
+        self.saver.save(self.sess, os.path.join(checkpoint_dir, model_name), global_step=step)
