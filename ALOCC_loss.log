@@ -157,3 +157,154 @@ INFO:root:Epoch:[ 1][   6/  39]--> centerloss: 17559.50000000, recon-loss: 60.13
 INFO:root:Epoch:[ 1][   7/  39]--> centerloss: 18124.69531250, recon-loss: 62.88777542
 INFO:root:Epoch:[ 1][   8/  39]--> centerloss: 17710.56835938, recon-loss: 53.52288055
 INFO:root:Epoch:[ 1][   9/  39]--> centerloss: 17395.26953125, recon-loss: 56.53449249
+INFO:root:Epoch:[ 1][  10/  39]--> centerloss: 18212.09765625, recon-loss: 52.72765350
+INFO:root:Epoch:[ 1][  11/  39]--> centerloss: 17651.04296875, recon-loss: 48.49214935
+INFO:root:Epoch:[ 1][  12/  39]--> centerloss: 17106.98242188, recon-loss: 42.55299759
+INFO:root:Epoch:[ 1][  13/  39]--> centerloss: 17507.36328125, recon-loss: 46.99342346
+INFO:root:Epoch:[ 1][  14/  39]--> centerloss: 18271.21679688, recon-loss: 44.70072937
+INFO:root:Epoch:[ 1][  15/  39]--> centerloss: 17786.49804688, recon-loss: 44.12728119
+INFO:root:Epoch:[ 1][  16/  39]--> centerloss: 17884.29882812, recon-loss: 42.61164856
+INFO:root:Epoch:[ 1][  17/  39]--> centerloss: 17268.79296875, recon-loss: 49.39823151
+INFO:root:Epoch:[ 1][  18/  39]--> centerloss: 16848.31054688, recon-loss: 44.39320755
+INFO:root:Epoch:[ 1][  19/  39]--> centerloss: 18040.14062500, recon-loss: 36.15671539
+INFO:root:Epoch:[ 1][  20/  39]--> centerloss: 17274.98046875, recon-loss: 41.94596481
+INFO:root:Epoch:[ 1][  21/  39]--> centerloss: 17193.51171875, recon-loss: 38.43674469
+INFO:root:Epoch:[ 1][  22/  39]--> centerloss: 17585.63867188, recon-loss: 42.34281158
+INFO:root:Epoch:[ 1][  23/  39]--> centerloss: 18748.65820312, recon-loss: 38.52899170
+INFO:root:Epoch:[ 1][  24/  39]--> centerloss: 17400.74804688, recon-loss: 33.88727570
+INFO:root:Epoch:[ 1][  25/  39]--> centerloss: 18102.31250000, recon-loss: 41.81484222
+INFO:root:Epoch:[ 1][  26/  39]--> centerloss: 17473.55859375, recon-loss: 38.32075500
+INFO:root:Epoch:[ 1][  27/  39]--> centerloss: 17493.83203125, recon-loss: 40.68638611
+INFO:root:Epoch:[ 1][  28/  39]--> centerloss: 18755.14062500, recon-loss: 37.03906250
+INFO:root:Epoch:[ 1][  29/  39]--> centerloss: 16416.83593750, recon-loss: 37.90794373
+INFO:root:Epoch:[ 1][  30/  39]--> centerloss: 17591.78125000, recon-loss: 30.97863960
+INFO:root:Epoch:[ 1][  31/  39]--> centerloss: 17767.81445312, recon-loss: 36.11103058
+INFO:root:Epoch:[ 1][  32/  39]--> centerloss: 16707.76171875, recon-loss: 32.04468536
+INFO:root:Epoch:[ 1][  33/  39]--> centerloss: 17473.56640625, recon-loss: 31.15372467
+INFO:root:Epoch:[ 1][  34/  39]--> centerloss: 17877.75195312, recon-loss: 29.15791321
+INFO:root:Epoch:[ 1][  35/  39]--> centerloss: 16686.27148438, recon-loss: 38.00518036
+INFO:root:Epoch:[ 1][  36/  39]--> centerloss: 18764.57031250, recon-loss: 32.41051865
+INFO:root:Epoch:[ 1][  37/  39]--> centerloss: 16457.70312500, recon-loss: 32.88832855
+INFO:root:Epoch:[ 1][  38/  39]--> centerloss: 18949.64453125, recon-loss: 30.06579971
+INFO:root:Epoch:[ 2][   0/  39]--> centerloss: 17172.62304688, recon-loss: 29.04062080
+INFO:root:Epoch:[ 2][   1/  39]--> centerloss: 18611.98046875, recon-loss: 30.18217278
+INFO:root:Epoch:[ 2][   2/  39]--> centerloss: 17199.12500000, recon-loss: 33.79131317
+INFO:root:Epoch:[ 2][   3/  39]--> centerloss: 16780.37109375, recon-loss: 26.58773422
+INFO:root:Epoch:[ 2][   4/  39]--> centerloss: 17897.60156250, recon-loss: 31.33389473
+INFO:root:Epoch:[ 2][   5/  39]--> centerloss: 16783.15625000, recon-loss: 24.41191673
+INFO:root:Epoch:[ 2][   6/  39]--> centerloss: 17557.70117188, recon-loss: 28.45908356
+INFO:root:Epoch:[ 2][   7/  39]--> centerloss: 18122.96875000, recon-loss: 30.83499718
+INFO:root:Epoch:[ 2][   8/  39]--> centerloss: 17708.96093750, recon-loss: 26.67976761
+INFO:root:Epoch:[ 2][   9/  39]--> centerloss: 17393.75000000, recon-loss: 29.42104149
+INFO:root:Epoch:[ 2][  10/  39]--> centerloss: 18210.63281250, recon-loss: 27.66039467
+INFO:root:Epoch:[ 2][  11/  39]--> centerloss: 17649.66015625, recon-loss: 26.09463501
+INFO:root:Epoch:[ 2][  12/  39]--> centerloss: 17105.69531250, recon-loss: 23.12491608
+INFO:root:Epoch:[ 2][  13/  39]--> centerloss: 17506.08593750, recon-loss: 25.38661575
+INFO:root:Epoch:[ 2][  14/  39]--> centerloss: 18269.99023438, recon-loss: 24.29748344
+INFO:root:Epoch:[ 2][  15/  39]--> centerloss: 17785.37109375, recon-loss: 24.99830246
+INFO:root:Epoch:[ 2][  16/  39]--> centerloss: 17883.19140625, recon-loss: 23.71127701
+INFO:root:Epoch:[ 2][  17/  39]--> centerloss: 17267.77539062, recon-loss: 28.22228622
+INFO:root:Epoch:[ 2][  18/  39]--> centerloss: 16847.34375000, recon-loss: 25.78648758
+INFO:root:Epoch:[ 2][  19/  39]--> centerloss: 18039.17773438, recon-loss: 21.29280472
+INFO:root:Epoch:[ 2][  20/  39]--> centerloss: 17274.06250000, recon-loss: 24.77706909
+INFO:tensorflow:Restoring parameters from cifar-10/pre/pre_model.ckpt
+INFO:root:Epoch:[ 2][  21/  39]--> centerloss: 17192.63281250, recon-loss: 23.04457283
+INFO:tensorflow:Restoring parameters from cifar-10/pre/pre_model.ckpt
+INFO:root:Epoch:[ 2][  22/  39]--> centerloss: 17584.78515625, recon-loss: 25.38250732
+INFO:tensorflow:Restoring parameters from cifar-10/pre/pre_model.ckpt
+INFO:root:Epoch:[ 2][  23/  39]--> centerloss: 18747.85546875, recon-loss: 24.32126999
+INFO:tensorflow:Restoring parameters from cifar-10/pre/pre_model.ckpt
+INFO:root:Epoch:[ 2][  24/  39]--> centerloss: 17399.99609375, recon-loss: 21.43639374
+INFO:tensorflow:Restoring parameters from cifar-10/pre/pre_model.ckpt
+INFO:root:Epoch:[ 2][  25/  39]--> centerloss: 18101.55078125, recon-loss: 27.37845230
+INFO:tensorflow:Restoring parameters from cifar-10/pre/pre_model.ckpt
+INFO:root:Epoch:[ 2][  26/  39]--> centerloss: 17472.87109375, recon-loss: 25.81938171
+INFO:tensorflow:Restoring parameters from cifar-10/pre/pre_model.ckpt
+INFO:root:Epoch:[ 2][  27/  39]--> centerloss: 17493.16406250, recon-loss: 26.41225052
+INFO:tensorflow:Restoring parameters from cifar-10/pre/pre_model.ckpt
+INFO:root:Epoch:[ 2][  28/  39]--> centerloss: 18754.50390625, recon-loss: 25.45759583
+INFO:tensorflow:Restoring parameters from cifar-10/pre/pre_model.ckpt
+INFO:root:Epoch:[ 2][  29/  39]--> centerloss: 16416.26562500, recon-loss: 26.00714684
+INFO:tensorflow:Restoring parameters from cifar-10/pre/pre_model.ckpt
+INFO:root:Epoch:[ 2][  30/  39]--> centerloss: 17591.19921875, recon-loss: 22.28601265
+INFO:tensorflow:Restoring parameters from cifar-10/pre/pre_model.ckpt
+INFO:root:Epoch:[ 2][  31/  39]--> centerloss: 17767.27148438, recon-loss: 25.54965782
+INFO:tensorflow:Restoring parameters from cifar-10/pre/pre_model.ckpt
+INFO:root:Epoch:[ 2][  32/  39]--> centerloss: 16707.28320312, recon-loss: 22.96638298
+INFO:tensorflow:Restoring parameters from cifar-10/pre/pre_model.ckpt
+INFO:root:Epoch:[ 2][  33/  39]--> centerloss: 17473.09960938, recon-loss: 22.81930161
+INFO:tensorflow:Restoring parameters from cifar-10/pre/pre_model.ckpt
+INFO:root:Epoch:[ 2][  34/  39]--> centerloss: 17877.29882812, recon-loss: 21.66129494
+INFO:tensorflow:Restoring parameters from cifar-10/pre/pre_model.ckpt
+INFO:tensorflow:Restoring parameters from cifar-10/pre/pre_model.ckpt
+WARNING:matplotlib.image:Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
+INFO:root:Epoch:[ 0][   0/  39]--> d_loss: 1.41524386, g_loss: 343.93844604
+INFO:root:Epoch:[ 0][   1/  39]--> d_loss: 1.36002743, g_loss: 372.76849365
+INFO:root:Epoch:[ 0][   2/  39]--> d_loss: 1.32643652, g_loss: 344.54064941
+INFO:tensorflow:Restoring parameters from cifar-10/pre/pre_model.ckpt
+WARNING:matplotlib.image:Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
+INFO:root:Epoch:[ 0][   0/  39]--> centerloss: 17172.27929688, recon-loss: 24.08430672
+INFO:root:Epoch:[ 0][   1/  39]--> centerloss: 18611.63281250, recon-loss: 24.29851341
+INFO:root:Epoch:[ 0][   2/  39]--> centerloss: 17198.81054688, recon-loss: 27.76363945
+INFO:root:Epoch:[ 0][   3/  39]--> centerloss: 16780.06640625, recon-loss: 21.67635155
+INFO:root:Epoch:[ 0][   4/  39]--> centerloss: 17897.29687500, recon-loss: 26.38303566
+INFO:root:Epoch:[ 0][   5/  39]--> centerloss: 16782.86328125, recon-loss: 20.17200851
+INFO:root:Epoch:[ 0][   6/  39]--> centerloss: 17557.41210938, recon-loss: 24.03203583
+INFO:root:Epoch:[ 0][   7/  39]--> centerloss: 18122.68750000, recon-loss: 25.19654083
+INFO:root:Epoch:[ 0][   8/  39]--> centerloss: 17708.68164062, recon-loss: 21.44401360
+INFO:root:Epoch:[ 0][   9/  39]--> centerloss: 17393.48437500, recon-loss: 24.71042252
+INFO:root:Epoch:[ 0][  10/  39]--> centerloss: 18210.36718750, recon-loss: 22.95469666
+INFO:root:Epoch:[ 0][  11/  39]--> centerloss: 17649.40625000, recon-loss: 21.48600006
+INFO:root:Epoch:[ 0][  12/  39]--> centerloss: 17105.46093750, recon-loss: 19.33222008
+INFO:root:Epoch:[ 0][  13/  39]--> centerloss: 17505.84375000, recon-loss: 20.90010452
+INFO:root:Epoch:[ 0][  14/  39]--> centerloss: 18269.75000000, recon-loss: 20.34859657
+INFO:root:Epoch:[ 0][  15/  39]--> centerloss: 17785.15039062, recon-loss: 21.23566818
+INFO:root:Epoch:[ 0][  16/  39]--> centerloss: 17882.95898438, recon-loss: 19.73077965
+INFO:root:Epoch:[ 0][  17/  39]--> centerloss: 17267.56054688, recon-loss: 24.16005898
+INFO:root:Epoch:[ 0][  18/  39]--> centerloss: 16847.13671875, recon-loss: 21.40163231
+INFO:root:Epoch:[ 0][  19/  39]--> centerloss: 18038.97265625, recon-loss: 18.42479706
+INFO:root:Epoch:[ 0][  20/  39]--> centerloss: 17273.86523438, recon-loss: 20.71925926
+INFO:root:Epoch:[ 0][  21/  39]--> centerloss: 17192.43750000, recon-loss: 19.71156311
+INFO:root:Epoch:[ 0][  22/  39]--> centerloss: 17584.57812500, recon-loss: 21.11232376
+INFO:root:Epoch:[ 0][  23/  39]--> centerloss: 18747.64648438, recon-loss: 20.22527122
+INFO:root:Epoch:[ 0][  24/  39]--> centerloss: 17399.77929688, recon-loss: 17.92483139
+INFO:root:Epoch:[ 0][  25/  39]--> centerloss: 18101.31835938, recon-loss: 22.33789444
+INFO:root:Epoch:[ 0][  26/  39]--> centerloss: 17472.65039062, recon-loss: 22.58866882
+INFO:root:Epoch:[ 0][  27/  39]--> centerloss: 17492.92187500, recon-loss: 22.84792900
+INFO:root:Epoch:[ 0][  28/  39]--> centerloss: 18754.27148438, recon-loss: 21.01724243
+INFO:root:Epoch:[ 0][  29/  39]--> centerloss: 16416.03515625, recon-loss: 21.98161316
+INFO:root:Epoch:[ 0][  30/  39]--> centerloss: 17590.94531250, recon-loss: 17.87303925
+INFO:root:Epoch:[ 0][  31/  39]--> centerloss: 17767.01171875, recon-loss: 21.13640213
+INFO:root:Epoch:[ 0][  32/  39]--> centerloss: 16707.02929688, recon-loss: 18.62187576
+INFO:root:Epoch:[ 0][  33/  39]--> centerloss: 17472.82812500, recon-loss: 18.55169296
+INFO:root:Epoch:[ 0][  34/  39]--> centerloss: 17877.03906250, recon-loss: 17.70075035
+INFO:root:Epoch:[ 0][  35/  39]--> centerloss: 16685.56835938, recon-loss: 22.24487686
+INFO:root:Epoch:[ 0][  36/  39]--> centerloss: 18763.83984375, recon-loss: 19.73233795
+INFO:root:Epoch:[ 0][  37/  39]--> centerloss: 16457.04687500, recon-loss: 19.67263031
+INFO:root:Epoch:[ 0][  38/  39]--> centerloss: 18948.95703125, recon-loss: 18.22902298
+INFO:root:Epoch:[ 1][   0/  39]--> centerloss: 17171.97851562, recon-loss: 18.15066910
+INFO:root:Epoch:[ 1][   1/  39]--> centerloss: 18611.33593750, recon-loss: 18.41477966
+INFO:root:Epoch:[ 1][   2/  39]--> centerloss: 17198.52148438, recon-loss: 20.92370605
+INFO:root:Epoch:[ 1][   3/  39]--> centerloss: 16779.79492188, recon-loss: 16.45987701
+INFO:root:Epoch:[ 1][   4/  39]--> centerloss: 17897.01953125, recon-loss: 19.88167953
+INFO:tensorflow:Restoring parameters from cifar-10/pre/pre_model.ckpt
+WARNING:matplotlib.image:Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
+INFO:tensorflow:Restoring parameters from cifar-10/pre/pre_model.ckpt
+INFO:tensorflow:Restoring parameters from cifar-10/pre/pre_model.ckpt
+WARNING:matplotlib.image:Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
+INFO:root:Epoch:[ 0][   0/  39]--> centerloss: 23.73309517, recon-loss: 17172.27929688
+INFO:root:Epoch:[ 0][   1/  39]--> centerloss: 24.05757713, recon-loss: 18611.63281250
+INFO:root:Epoch:[ 0][   2/  39]--> centerloss: 27.39165878, recon-loss: 17198.81054688
+INFO:root:Epoch:[ 0][   3/  39]--> centerloss: 21.74117279, recon-loss: 16780.06640625
+INFO:root:Epoch:[ 0][   4/  39]--> centerloss: 25.90212631, recon-loss: 17897.29492188
+INFO:root:Epoch:[ 0][   5/  39]--> centerloss: 20.03553391, recon-loss: 16782.85937500
+INFO:root:Epoch:[ 0][   6/  39]--> centerloss: 23.85646057, recon-loss: 17557.41210938
+INFO:root:Epoch:[ 0][   7/  39]--> centerloss: 25.50407600, recon-loss: 18122.68750000
+INFO:root:Epoch:[ 0][   8/  39]--> centerloss: 21.59270477, recon-loss: 17708.67968750
+INFO:root:Epoch:[ 0][   9/  39]--> centerloss: 24.56502151, recon-loss: 17393.48632812
+INFO:root:Epoch:[ 0][  10/  39]--> centerloss: 22.90347099, recon-loss: 18210.36718750
+INFO:root:Epoch:[ 0][  11/  39]--> centerloss: 21.62471771, recon-loss: 17649.40625000
+INFO:root:Epoch:[ 0][  12/  39]--> centerloss: 19.24778748, recon-loss: 17105.46093750
+INFO:root:Epoch:[ 0][  13/  39]--> centerloss: 20.70198059, recon-loss: 17505.84375000
+INFO:root:Epoch:[ 0][  14/  39]--> centerloss: 20.40477943, recon-loss: 18269.75000000
+INFO:root:Epoch:[ 0][  15/  39]--> centerloss: 20.91517639, recon-loss: 17785.15234375

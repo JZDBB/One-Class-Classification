@@ -100,12 +100,12 @@ class ALOCC_Model(object):
 
         self.pre_loss = 0.5 * self.center_loss + self.g_r_loss
 
-        self.g_loss = self.g_loss + self.g_r_loss * self.r_alpha
+        self.g_loss = self.g_loss + self.g_r_loss * self.r_alpha + self.center_loss * 0.5
         self.d_loss = self.d_loss_real + self.d_loss_fake
 
         self.pre_loss_sum = scalar_summary("pre_loss_sum", self.pre_loss)
         # self.pre_loss_recon_sum = scalar_summary("pre_loss_recon", self.g_r_loss)
-        self.pre_center_loss = scalar_summary("pre_center_loss", self.center_loss)
+        self.center_loss_sum = scalar_summary("pre_center_loss", self.center_loss)
         self.d_loss_real_sum = scalar_summary("d_loss_real", self.d_loss_real)
         self.d_loss_fake_sum = scalar_summary("d_loss_fake", self.d_loss_fake)
         self.g_loss_sum = scalar_summary("g_loss", self.g_loss)
@@ -208,8 +208,13 @@ class ALOCC_Model(object):
             tf.initialize_all_variables().run()
 
         self.saver = tf.train.Saver()
+        if os.path.exists('cifar-10/pre/checkpoint'):
+            self.saver.restore(self.sess, "cifar-10/pre/pre_model.ckpt")
+        if os.path.exists('cifar-10/checkpoint'):
+            self.saver.restore(self.sess, "checkpoint/model.ckpt")
 
-        self.g_sum = merge_summary([self.g_r_loss_, self.g_loss_sum])
+        self.pre_sum = merge_summary([self.center_loss_sum, self.g_r_loss_])
+        self.g_sum = merge_summary([self.g_r_loss_, self.g_loss_sum, self.center_loss_sum])
         self.d_sum = merge_summary([self.d_loss_real_sum, self.d_loss_sum])
 
         log_dir = os.path.join(self.log_dir, self.model_dir)
@@ -241,17 +246,14 @@ class ALOCC_Model(object):
                 batch_z = np.random.uniform(-1, 1, [config.batch_size, self.z_dim]).astype(np.float32)
 
                 if self.pre:
-                    if os.path.exists('cifar-10/pre/checkpoint'):
-                        self.saver.restore(self.sess, "cifar-10/pre/pre_model.ckpt")
-
-                    _, _, summary_str = self.sess.run([train, self.centers_update_op, self.pre_loss],
+                    _, _, summary_str = self.sess.run([train, self.centers_update_op, self.pre_sum],
                         feed_dict={self.inputs: batch_images, self.z: batch_noise_images})
 
-                    # self.writer.add_summary(summary_str, counter)
+                    self.writer.add_summary(summary_str, counter)
                     counter += 1
 
-                    recon = self.center_loss.eval({self.inputs: batch_images, self.z: batch_noise_images})
-                    centerloss = self.g_r_loss.eval({self.inputs: batch_images, self.z: batch_noise_images})
+                    centerloss = self.center_loss.eval({self.inputs: batch_images, self.z: batch_noise_images})
+                    recon = self.g_r_loss.eval({self.inputs: batch_images, self.z: batch_noise_images})
                     msg = "Epoch:[%2d][%4d/%4d]--> centerloss: %.8f, recon-loss: %.8f" % (epoch, idx, batch_idxs, centerloss, recon)
                     print(msg)
                     logging.info(msg)
@@ -259,15 +261,14 @@ class ALOCC_Model(object):
                         self.saver.save(self.sess, "cifar-10/pre/pre_model.ckpt")
 
                 else:
-                    if os.path.exists('cifar-10/checkpoint'):
-                        self.saver.restore(self.sess, "checkpoint/model.ckpt")
+
                     # Update D network
                     _, summary_str = self.sess.run([d_optim, self.d_sum],
                                                    feed_dict={self.inputs: batch_images, self.z: batch_noise_images})
                     self.writer.add_summary(summary_str, counter)
 
                     # Update G network
-                    _, summary_str = self.sess.run([g_optim, self.g_sum],
+                    _, _, summary_str = self.sess.run([g_optim, self.centers_update_op, self.g_sum],
                                                    feed_dict={self.inputs: batch_images, self.z: batch_noise_images})
                     self.writer.add_summary(summary_str, counter)
 
