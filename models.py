@@ -76,11 +76,9 @@ class ALOCC_Model(object):
         labels = tf.Variable(tf.zeros([1, self.batch_size], tf.int64))
         self.inputs = tf.placeholder(tf.float32, [self.batch_size] + image_dims, name='real_images')
         self.sample_inputs = tf.placeholder(tf.float32, [self.sample_num] + image_dims, name='sample_inputs')
-        inputs = self.inputs
-        sample_inputs = self.sample_inputs
         self.z = tf.placeholder(tf.float32, [self.batch_size] + image_dims, name='z')
         self.G, self.feature = self.generator(self.z)
-        self.D, self.D_logits = self.discriminator(inputs)
+        self.D, self.D_logits = self.discriminator(self.inputs)
         self.sampler = self.sampler(self.z)
         self.D_, self.D_logits_ = self.discriminator(self.G, reuse=True)
 
@@ -93,7 +91,7 @@ class ALOCC_Model(object):
             tf.nn.sigmoid_cross_entropy_with_logits(logits=self.D_logits_, labels=tf.ones_like(self.D_)))
 
         # Refinement loss
-        self.g_r_loss = tf.reduce_mean(tf.losses.mean_squared_error(labels=inputs, predictions=self.G))
+        self.g_r_loss = tf.reduce_mean(tf.losses.mean_squared_error(labels=self.inputs, predictions=self.G))
 
         # center-loss
         self.center_loss, self.centers, self.centers_update_op = get_center_loss(self.feature, labels, 0.5, 1)
@@ -135,70 +133,123 @@ class ALOCC_Model(object):
 
     def generator(self, z):
         with tf.variable_scope("generator") as scope:
-            s_h, s_w = self.output_height, self.output_width
-            s_h2, s_w2 = conv_out_size_same(s_h, 2), conv_out_size_same(s_w, 2)
-            s_h4, s_w4 = conv_out_size_same(s_h2, 2), conv_out_size_same(s_w2, 2)
-            s_h8, s_w8 = conv_out_size_same(s_h4, 2), conv_out_size_same(s_w4, 2)
-            s_h16, s_w16 = conv_out_size_same(s_h8, 2), conv_out_size_same(s_w8, 2)
+            # s_h, s_w = self.output_height, self.output_width
+            # s_h2, s_w2 = conv_out_size_same(s_h, 2), conv_out_size_same(s_w, 2)
+            # s_h4, s_w4 = conv_out_size_same(s_h2, 2), conv_out_size_same(s_w2, 2)
+            # s_h8, s_w8 = conv_out_size_same(s_h4, 2), conv_out_size_same(s_w4, 2)
+            # s_h16, s_w16 = conv_out_size_same(s_h8, 2), conv_out_size_same(s_w8, 2)
+            #
+            # hae0 = lrelu(self.g_bn4(conv2d(z, self.df_dim * 2, name='g_encoder_h0_conv')))
+            # hae1 = lrelu(self.g_bn5(conv2d(hae0, self.df_dim * 4, name='g_encoder_h1_conv')))
+            # hae2 = lrelu(self.g_bn6(conv2d(hae1, self.df_dim * 8, name='g_encoder_h2_conv')))
+            #
+            # flat = tf.contrib.layers.flatten(hae2)
+            # feature = tf.layers.dense(flat, units=128, name='g_mean')
+            # z_develop = tf.layers.dense(feature, units=4 * 4 * 128, name="g_flat")
+            # decode_in = tf.reshape(z_develop, [-1, 4, 4, 128])
+            #
+            # h2, self.h2_w, self.h2_b = deconv2d(
+            #     decode_in, [self.batch_size, s_h4, s_w4, self.gf_dim * 2], name='g_decoder_h1', with_w=True)
+            # h2 = tf.nn.relu(self.g_bn2(h2))
+            #
+            # h3, self.h3_w, self.h3_b = deconv2d(
+            #     h2, [self.batch_size, s_h2, s_w2, self.gf_dim * 1], name='g_decoder_h0', with_w=True)
+            # h3 = tf.nn.relu(self.g_bn3(h3))
+            #
+            # h4, self.h4_w, self.h4_b = deconv2d(
+            #     h3, [self.batch_size, s_h, s_w, self.c_dim], name='g_decoder_h00', with_w=True)
+            xavier_initializer = tf.contrib.layers.xavier_initializer()
 
-            hae0 = lrelu(self.g_bn4(conv2d(z, self.df_dim * 2, name='g_encoder_h0_conv')))
-            hae1 = lrelu(self.g_bn5(conv2d(hae0, self.df_dim * 4, name='g_encoder_h1_conv')))
-            hae2 = lrelu(self.g_bn6(conv2d(hae1, self.df_dim * 8, name='g_encoder_h2_conv')))
+            conv1 = tf.layers.conv2d(inputs=z, filters=32, kernel_size=4, strides=2, padding='same',
+                                     name="g_conv1", kernel_initializer=xavier_initializer, activation=lrelu)
 
-            flat = tf.contrib.layers.flatten(hae2)
-            feature = tf.layers.dense(flat, units=128, name='z_mean')
-            z_develop = tf.layers.dense(feature, units=4 * 4 * 128)
-            decode_in = tf.nn.relu(tf.reshape(z_develop, [-1, 4, 4, 128]))
+            conv2 = tf.layers.conv2d(inputs=conv1, filters=64, kernel_size=4, strides=2, padding='same',
+                                     name="g_conv2", kernel_initializer=xavier_initializer, activation=lrelu)
 
-            h2, self.h2_w, self.h2_b = deconv2d(
-                decode_in, [self.batch_size, s_h4, s_w4, self.gf_dim * 2], name='g_decoder_h1', with_w=True)
-            h2 = tf.nn.relu(self.g_bn2(h2))
+            conv3 = tf.layers.conv2d(inputs=conv2, filters=128, kernel_size=4, strides=2, padding='same',
+                                     name="g_conv3", kernel_initializer=xavier_initializer, activation=lrelu)
 
-            h3, self.h3_w, self.h3_b = deconv2d(
-                h2, [self.batch_size, s_h2, s_w2, self.gf_dim * 1], name='g_decoder_h0', with_w=True)
-            h3 = tf.nn.relu(self.g_bn3(h3))
+            flat = tf.contrib.layers.flatten(conv3)
+            feature = tf.layers.dense(flat, units=128, name='g_mean')
+            z_develop = tf.layers.dense(feature, units=4 * 4 * 128, name="g_flat")
+            net = tf.nn.relu(tf.reshape(z_develop, [-1, 4, 4, 128]))
 
-            h4, self.h4_w, self.h4_b = deconv2d(
-                h3, [self.batch_size, s_h, s_w, self.c_dim], name='g_decoder_h00', with_w=True)
+            net = tf.layers.conv2d_transpose(inputs=net, filters=64, kernel_size=4, strides=2, padding='same',
+                                             name="g_deconv1", kernel_initializer=xavier_initializer, activation=lrelu)
 
-            return tf.nn.tanh(h4, name='g_output'), feature
+            net = tf.layers.conv2d_transpose(inputs=net, filters=32, kernel_size=4, strides=2, padding='same',
+                                             name="g_deconv2", kernel_initializer=xavier_initializer, activation=lrelu)
+
+            net = tf.layers.conv2d_transpose(inputs=net, filters=3, kernel_size=4, strides=2, padding='same',
+                                             name="g_deconv3", kernel_initializer=xavier_initializer)
+
+            # net = tf.nn.sigmoid(net, name="g_sigmoid")
+            net = tf.nn.tanh(net, name="g_tanh")
+            return net, feature
 
     def sampler(self, z, y=None):
         with tf.variable_scope("generator") as scope:
             scope.reuse_variables()
+            # s_h, s_w = self.output_height, self.output_width
+            # s_h2, s_w2 = conv_out_size_same(s_h, 2), conv_out_size_same(s_w, 2)
+            # s_h4, s_w4 = conv_out_size_same(s_h2, 2), conv_out_size_same(s_w2, 2)
+            # s_h8, s_w8 = conv_out_size_same(s_h4, 2), conv_out_size_same(s_w4, 2)
+            # s_h16, s_w16 = conv_out_size_same(s_h8, 2), conv_out_size_same(s_w8, 2)
+            #
+            # hae0 = lrelu(self.g_bn4(conv2d(z, self.df_dim * 2, name='g_encoder_h0_conv')))
+            # hae1 = lrelu(self.g_bn5(conv2d(hae0, self.df_dim * 4, name='g_encoder_h1_conv')))
+            # hae2 = lrelu(self.g_bn6(conv2d(hae1, self.df_dim * 8, name='g_encoder_h2_conv')))
+            #
+            # flat = tf.contrib.layers.flatten(hae2)
+            # feature = tf.layers.dense(flat, units=128, name='z_mean')
+            # z_develop = tf.layers.dense(feature, units=4 * 4 * 128)
+            # decode_in = tf.nn.relu(tf.reshape(z_develop, [-1, 4, 4, 128]))
+            # h2, self.h2_w, self.h2_b = deconv2d(
+            #     hae2, [self.batch_size, s_h4, s_w4, self.gf_dim * 2], name='g_decoder_h1', with_w=True)
+            # h2 = tf.nn.relu(self.g_bn2(h2))
+            #
+            # h3, self.h3_w, self.h3_b = deconv2d(
+            #     h2, [self.batch_size, s_h2, s_w2, self.gf_dim * 1], name='g_decoder_h0', with_w=True)
+            # h3 = tf.nn.relu(self.g_bn3(h3))
+            #
+            # h4, self.h4_w, self.h4_b = deconv2d(
+            #     h3, [self.batch_size, s_h, s_w, self.c_dim], name='g_decoder_h00', with_w=True)
+            #
+            # return tf.nn.tanh(h4, name='g_output')
+            xavier_initializer = tf.contrib.layers.xavier_initializer()
 
-            s_h, s_w = self.output_height, self.output_width
-            s_h2, s_w2 = conv_out_size_same(s_h, 2), conv_out_size_same(s_w, 2)
-            s_h4, s_w4 = conv_out_size_same(s_h2, 2), conv_out_size_same(s_w2, 2)
-            s_h8, s_w8 = conv_out_size_same(s_h4, 2), conv_out_size_same(s_w4, 2)
-            s_h16, s_w16 = conv_out_size_same(s_h8, 2), conv_out_size_same(s_w8, 2)
+            conv1 = tf.layers.conv2d(inputs=z, filters=32, kernel_size=4, strides=2, padding='same',
+                                     name="g_conv1", kernel_initializer=xavier_initializer, activation=lrelu)
 
-            hae0 = lrelu(self.g_bn4(conv2d(z, self.df_dim * 2, name='g_encoder_h0_conv')))
-            hae1 = lrelu(self.g_bn5(conv2d(hae0, self.df_dim * 4, name='g_encoder_h1_conv')))
-            hae2 = lrelu(self.g_bn6(conv2d(hae1, self.df_dim * 8, name='g_encoder_h2_conv')))
+            conv2 = tf.layers.conv2d(inputs=conv1, filters=64, kernel_size=4, strides=2, padding='same',
+                                     name="g_conv2", kernel_initializer=xavier_initializer, activation=lrelu)
 
-            flat = tf.contrib.layers.flatten(hae2)
-            feature = tf.layers.dense(flat, units=128, name='z_mean')
-            z_develop = tf.layers.dense(feature, units=4 * 4 * 128)
-            decode_in = tf.nn.relu(tf.reshape(z_develop, [-1, 4, 4, 128]))
-            h2, self.h2_w, self.h2_b = deconv2d(
-                hae2, [self.batch_size, s_h4, s_w4, self.gf_dim * 2], name='g_decoder_h1', with_w=True)
-            h2 = tf.nn.relu(self.g_bn2(h2))
+            conv3 = tf.layers.conv2d(inputs=conv2, filters=128, kernel_size=4, strides=2, padding='same',
+                                     name="g_conv3", kernel_initializer=xavier_initializer, activation=lrelu)
 
-            h3, self.h3_w, self.h3_b = deconv2d(
-                h2, [self.batch_size, s_h2, s_w2, self.gf_dim * 1], name='g_decoder_h0', with_w=True)
-            h3 = tf.nn.relu(self.g_bn3(h3))
+            flat = tf.contrib.layers.flatten(conv3)
+            feature = tf.layers.dense(flat, units=128, name='g_mean')
+            z_develop = tf.layers.dense(feature, units=4 * 4 * 128, name="g_flat")
+            net = tf.nn.relu(tf.reshape(z_develop, [-1, 4, 4, 128]))
 
-            h4, self.h4_w, self.h4_b = deconv2d(
-                h3, [self.batch_size, s_h, s_w, self.c_dim], name='g_decoder_h00', with_w=True)
+            net = tf.layers.conv2d_transpose(inputs=net, filters=64, kernel_size=4, strides=2, padding='same',
+                                             name="g_deconv1", kernel_initializer=xavier_initializer, activation=lrelu)
 
-            return tf.nn.tanh(h4, name='g_output')
+            net = tf.layers.conv2d_transpose(inputs=net, filters=32, kernel_size=4, strides=2, padding='same',
+                                             name="g_deconv2", kernel_initializer=xavier_initializer, activation=lrelu)
 
-        # =========================================================================================================
+            net = tf.layers.conv2d_transpose(inputs=net, filters=3, kernel_size=4, strides=2, padding='same',
+                                             name="g_deconv3", kernel_initializer=xavier_initializer)
+
+            # net = tf.nn.sigmoid(net, name="g_sigmoid")
+            net = tf.nn.tanh(net, name="g_tanh")
+            return net
+
 
     def train(self, config):
-        train = layers.optimize_loss(self.pre_loss, tf.train.get_or_create_global_step(),
-                                     learning_rate=config.learning_rate, optimizer='Adam', update_ops=[])
+        # train = layers.optimize_loss(self.pre_loss, tf.train.get_or_create_global_step(),
+        #                              learning_rate=config.learning_rate, optimizer='Adam', update_ops=[])
+        pre_optim = tf.train.RMSPropOptimizer(config.learning_rate).minimize(self.pre_loss, var_list=self.g_vars)
         d_optim = tf.train.RMSPropOptimizer(config.learning_rate).minimize(self.d_loss, var_list=self.d_vars)
         g_optim = tf.train.RMSPropOptimizer(config.learning_rate).minimize(self.g_loss, var_list=self.g_vars)
 
@@ -208,10 +259,10 @@ class ALOCC_Model(object):
             tf.initialize_all_variables().run()
 
         self.saver = tf.train.Saver()
-        if os.path.exists('cifar-10/pre/checkpoint'):
-            self.saver.restore(self.sess, "cifar-10/pre/pre_model.ckpt")
         if os.path.exists('cifar-10/checkpoint'):
-            self.saver.restore(self.sess, "checkpoint/model.ckpt")
+            self.saver.restore(self.sess, "checkpoint/ALOCC_Model.ckpt")
+        elif os.path.exists('cifar-10/pre/checkpoint'):
+            self.saver.restore(self.sess, "cifar-10/pre/pre_model.ckpt")
 
         self.pre_sum = merge_summary([self.center_loss_sum, self.g_r_loss_])
         self.g_sum = merge_summary([self.g_r_loss_, self.g_loss_sum, self.center_loss_sum])
@@ -246,7 +297,7 @@ class ALOCC_Model(object):
                 batch_z = np.random.uniform(-1, 1, [config.batch_size, self.z_dim]).astype(np.float32)
 
                 if self.pre:
-                    _, _, summary_str = self.sess.run([train, self.centers_update_op, self.pre_sum],
+                    _, _, summary_str = self.sess.run([d_optim, self.centers_update_op, self.pre_sum],
                         feed_dict={self.inputs: batch_images, self.z: batch_noise_images})
 
                     self.writer.add_summary(summary_str, counter)
@@ -254,14 +305,13 @@ class ALOCC_Model(object):
 
                     centerloss = self.center_loss.eval({self.inputs: batch_images, self.z: batch_noise_images})
                     recon = self.g_r_loss.eval({self.inputs: batch_images, self.z: batch_noise_images})
-                    msg = "Epoch:[%2d][%4d/%4d]--> centerloss: %.8f, recon-loss: %.8f" % (epoch, idx, batch_idxs, centerloss, recon)
+                    msg = "Epoch:[%2d][%4d/%4d]--> centerloss: %.8f, recon-loss: %.8f" % (epoch, idx, batch_idxs, centerloss / self.batch_size, recon / self.batch_size)
                     print(msg)
                     logging.info(msg)
-                    if counter % 100 == 0:
+                    if np.mod(counter, self.n_per_itr_print_results) == 0:
                         self.saver.save(self.sess, "cifar-10/pre/pre_model.ckpt")
 
                 else:
-
                     # Update D network
                     _, summary_str = self.sess.run([d_optim, self.d_sum],
                                                    feed_dict={self.inputs: batch_images, self.z: batch_noise_images})
@@ -285,30 +335,31 @@ class ALOCC_Model(object):
                     msg = "Epoch:[%2d][%4d/%4d]--> d_loss: %.8f, g_loss: %.8f" % (epoch, idx, batch_idxs, errD_fake + errD_real, errG)
                     print(msg)
                     logging.info(msg)
-                if not self.pre:
                     if np.mod(counter, self.n_per_itr_print_results) == 0:
-                        samples, d_loss, g_loss = self.sess.run(
-                            [self.sampler, self.d_loss, self.g_loss],
-                            feed_dict={
-                                self.z: sample_inputs,
-                                self.inputs: sample_inputs
-                            }
-                        )
-                        manifold_h = int(np.ceil(np.sqrt(samples.shape[0])))
-                        manifold_w = int(np.floor(np.sqrt(samples.shape[0])))
-                        save_images(samples, [manifold_h, manifold_w],
-                                    './{}/train_{:02d}_{:04d}.png'.format(config.sample_dir, epoch, idx))
-                        print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss))
+                        self.save(config.checkpoint_dir, epoch)
+                # if not self.pre:
+                if np.mod(counter, self.n_per_itr_print_results) == 0:
+                    samples, d_loss, g_loss = self.sess.run([self.G, self.d_loss, self.g_loss],
+                        feed_dict={
+                            self.z: sample_inputs,
+                            self.inputs: sample_inputs
+                        }
+                    )
+                    manifold_h = int(np.ceil(np.sqrt(samples.shape[0])))
+                    manifold_w = int(np.floor(np.sqrt(samples.shape[0])))
+                    # samples = samples * 128 + 128
+                    save_images(samples, [manifold_h, manifold_w],
+                                './{}/train_{:02d}_{:04d}.png'.format(config.sample_dir, epoch, idx))
+                    print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss))
 
-                    self.save(config.checkpoint_dir, epoch)
 
     @property
     def model_dir(self):
         return "{}_{}_{}_{}".format(self.dataset_name, self.batch_size, self.output_height, self.output_width)
 
     def save(self, checkpoint_dir, step):
-        model_name = "ALOCC_Model.model"
-        checkpoint_dir = os.path.join(checkpoint_dir, self.model_dir)
+        model_name = "ALOCC_Model.ckpt"
+        # checkpoint_dir = os.path.join(checkpoint_dir, self.model_dir)
 
         if not os.path.exists(checkpoint_dir):
             os.makedirs(checkpoint_dir)
