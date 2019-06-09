@@ -1,1 +1,5 @@
 dataset/
+export/
+checkpoint/
+cifar-10/
+log/
