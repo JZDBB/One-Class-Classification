@@ -48,7 +48,7 @@ def main(_):
     The main function for training steps     
     """
     pp.pprint(flags.FLAGS.__flags)
-    n_per_itr_print_results = 10
+    n_per_itr_print_results = 100
     kb_work_on_patch = True
 
     nd_input_frame_size = (240, 360)
@@ -95,7 +95,7 @@ def main(_):
                     input_fname_pattern=FLAGS.input_fname_pattern,
                     checkpoint_dir=FLAGS.checkpoint_dir,
                     is_training = FLAGS.train,
-                    pre=FLAGS.pretrain,
+                    # pre=FLAGS.pretrain,
                     log_dir=FLAGS.log_dir,
                     sample_dir=FLAGS.sample_dir,
                     nd_patch_size=nd_slice_size,
