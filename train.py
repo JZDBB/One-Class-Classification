@@ -23,7 +23,8 @@ flags.DEFINE_string("checkpoint_dir", "checkpoint", "Directory name to save the 
 flags.DEFINE_string("log_dir", "log", "Directory name to save the log [log]")
 flags.DEFINE_string("sample_dir", "samples", "Directory name to save the image samples [samples]")
 flags.DEFINE_boolean("train", True, "True for training, False for testing [False]")
-flags.DEFINE_boolean("pretrain", True, "True for pretrain, False for training")
+flags.DEFINE_boolean("pretrain", False, "True for pretrain, False for training")
+flags.DEFINE_string("pre_dir", "pretrain", "Directory name to save the pretrain model [pretrain]")
 FLAGS = flags.FLAGS
 
 
@@ -45,7 +46,7 @@ def check_some_assertions():
 
 def main(_):
     """
-    The main function for training steps     
+    The main function for training steps
     """
     pp.pprint(flags.FLAGS.__flags)
     n_per_itr_print_results = 100
@@ -96,6 +97,7 @@ def main(_):
                     checkpoint_dir=FLAGS.checkpoint_dir,
                     is_training = FLAGS.train,
                     pre=FLAGS.pretrain,
+                    pre_dir=FLAGS.pre_dir,
                     log_dir=FLAGS.log_dir,
                     sample_dir=FLAGS.sample_dir,
                     nd_patch_size=nd_slice_size,

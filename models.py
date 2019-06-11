@@ -15,7 +15,7 @@ class ALOCC_Model(object):
                  batch_size=128, sample_num=128, attention_label=1, is_training=True,
                  z_dim=100, gf_dim=16, df_dim=16, gfc_dim=512, dfc_dim=512, c_dim=3,
                  dataset_name=None, dataset_address=None, input_fname_pattern=None,
-                 checkpoint_dir=None, pre=False, log_dir=None, sample_dir=None, r_alpha=0.2,
+                 checkpoint_dir=None, pre=False, pre_dir=None, log_dir=None, sample_dir=None, r_alpha=0.2,
                  kb_work_on_patch=True, nd_input_frame_size=(240, 360), nd_patch_size=(10, 10), n_stride=1,
                  n_fetch_data=10, n_per_itr_print_results=20):
         """
@@ -47,6 +47,7 @@ class ALOCC_Model(object):
         self.sess = sess
         self.is_training = is_training
         self.pre = pre
+        self.pre_dir = pre_dir
         self.r_alpha = r_alpha
 
         self.batch_size = batch_size
@@ -168,6 +169,7 @@ class ALOCC_Model(object):
         self.d_sum = merge_summary([self.d_loss_real_sum, self.d_loss_sum])
 
         log_dir = os.path.join(self.log_dir, self.model_dir)
+
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
 
@@ -181,9 +183,12 @@ class ALOCC_Model(object):
         # load previous checkpoint
         counter = 1
         could_load, checkpoint_counter = self.load(self.checkpoint_dir)
+        could_load_pre, _ = self.load(self.pre_dir)
         if could_load:
             counter = checkpoint_counter
-            print(" [*] Load SUCCESS")
+            print(" [*] Load model SUCCESS")
+        elif could_load_pre:
+            print(" [*] Load pretrain model SUCCESS")
         else:
             print(" [!] Load failed...")
 
@@ -227,7 +232,7 @@ class ALOCC_Model(object):
                         save_images(samples, [manifold_h, manifold_w],
                                     './{}/train_{:02d}_{:04d}.png'.format(config.sample_dir, epoch, idx))
                         print("[Sample] g_loss: %.8f" % (g_loss))
-                self.save('pretrain', epoch)
+                self.save(self.pre_dir, epoch)
         else:
             for epoch in xrange(config.epoch):
                 print('Epoch ({}/{})-------------------------------------------------'.format(epoch, config.epoch))
