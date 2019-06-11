@@ -139,6 +139,7 @@ class ALOCC_Model(object):
         self.g_loss = self.g_loss + self.g_r_loss * self.r_alpha
         self.d_loss = self.d_loss_real + self.d_loss_fake
 
+        self.g_preloss_sum = scalar_summary("g_preloss", self.g_r_loss)
         self.d_loss_real_sum = scalar_summary("d_loss_real", self.d_loss_real)
         self.d_loss_fake_sum = scalar_summary("d_loss_fake", self.d_loss_fake)
         self.g_loss_sum = scalar_summary("g_loss", self.g_loss)
@@ -151,6 +152,7 @@ class ALOCC_Model(object):
 
     # =========================================================================================================
     def train(self, config):
+        g_pre_optim = tf.train.RMSPropOptimizer(config.learning_rate).minimize(self.g_r_loss, var_list=self.g_vars)
         d_optim = tf.train.RMSPropOptimizer(config.learning_rate).minimize(self.d_loss, var_list=self.d_vars)
         g_optim = tf.train.RMSPropOptimizer(config.learning_rate).minimize(self.g_loss, var_list=self.g_vars)
 
@@ -162,6 +164,7 @@ class ALOCC_Model(object):
         self.saver = tf.train.Saver()
 
         self.g_sum = merge_summary([self.d_loss_fake_sum, self.g_loss_sum])
+        self.g_presum = merge_summary([self.g_preloss_sum])
         self.d_sum = merge_summary([self.d_loss_real_sum, self.d_loss_sum])
 
         log_dir = os.path.join(self.log_dir, self.model_dir)
@@ -199,11 +202,11 @@ class ALOCC_Model(object):
                     batch_z = np.random.uniform(-1, 1, [config.batch_size, self.z_dim]).astype(np.float32)
 
                     # Update G network
-                    _, summary_str = self.sess.run([g_optim, self.g_sum],
+                    _, summary_str = self.sess.run([g_pre_optim, self.g_presum],
                                                    feed_dict={self.z: batch_noise_images})
                     self.writer.add_summary(summary_str, counter)
 
-                    errG = self.g_loss.eval({self.z: batch_noise_images})
+                    errG = self.g_r_loss.eval({self.z: batch_noise_images})
                     counter += 1
 
                     msg = "Epoch:[%2d][%4d/%4d]--> g_loss: %.8f" % (
@@ -213,7 +216,7 @@ class ALOCC_Model(object):
 
                     if np.mod(counter, self.n_per_itr_print_results) == 0:
                         samples, g_loss = self.sess.run(
-                            [self.sampler, self.g_loss],
+                            [self.sampler, self.g_r_loss],
                             feed_dict={
                                 self.z: sample_inputs,
                                 self.inputs: sample_inputs
@@ -258,7 +261,7 @@ class ALOCC_Model(object):
                     counter += 1
 
                     msg = "Epoch:[%2d][%4d/%4d]--> d_loss: %.8f, g_loss: %.8f" % (
-                                    epoch, idx, batch_idxs, errD_fake + errD_real, errG)
+                        epoch, idx, batch_idxs, errD_fake + errD_real, errG)
                     print(msg)
                     logging.info(msg)
 
