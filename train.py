@@ -95,7 +95,7 @@ def main(_):
                     input_fname_pattern=FLAGS.input_fname_pattern,
                     checkpoint_dir=FLAGS.checkpoint_dir,
                     is_training = FLAGS.train,
-                    # pre=FLAGS.pretrain,
+                    pre=FLAGS.pretrain,
                     log_dir=FLAGS.log_dir,
                     sample_dir=FLAGS.sample_dir,
                     nd_patch_size=nd_slice_size,

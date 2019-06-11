@@ -15,7 +15,7 @@ class ALOCC_Model(object):
                  batch_size=128, sample_num=128, attention_label=1, is_training=True,
                  z_dim=100, gf_dim=16, df_dim=16, gfc_dim=512, dfc_dim=512, c_dim=3,
                  dataset_name=None, dataset_address=None, input_fname_pattern=None,
-                 checkpoint_dir=None, log_dir=None, sample_dir=None, r_alpha=0.2,
+                 checkpoint_dir=None, pre=False, log_dir=None, sample_dir=None, r_alpha=0.2,
                  kb_work_on_patch=True, nd_input_frame_size=(240, 360), nd_patch_size=(10, 10), n_stride=1,
                  n_fetch_data=10, n_per_itr_print_results=20):
         """
@@ -46,7 +46,7 @@ class ALOCC_Model(object):
 
         self.sess = sess
         self.is_training = is_training
-
+        self.pre = pre
         self.r_alpha = r_alpha
 
         self.batch_size = batch_size
@@ -94,27 +94,12 @@ class ALOCC_Model(object):
             specific_idx = np.where(mnist.train.labels == self.attention_label)[0]
             self.data = mnist.train.images[specific_idx].reshape(-1, 28, 28, 1)
             self.c_dim = 1
-        elif self.dataset_name == 'UCSD':
-            self.nStride = n_stride
-            self.patch_size = nd_patch_size
-            self.patch_step = (n_stride, n_stride)
-            lst_image_paths = []
-            for s_image_dir_path in glob(os.path.join(self.dataset_address, self.input_fname_pattern)):
-                for sImageDirFiles in glob(os.path.join(s_image_dir_path + '/*')):
-                    lst_image_paths.append(sImageDirFiles)
-            self.dataAddress = lst_image_paths
-            lst_forced_fetch_data = [self.dataAddress[x] for x in
-                                     random.sample(range(0, len(lst_image_paths)), n_fetch_data)]
-
-            self.data = lst_forced_fetch_data
-            self.c_dim = 1
         elif self.dataset_name == 'cifar-10':
             self.data = read_data.read_data(1)
             self.c_dim = 3
         else:
             assert ('Error in loading dataset')
 
-        # self.grayscale = (self.c_dim == 1)
         self.build_model()
 
     # =========================================================================================================
@@ -201,64 +186,97 @@ class ALOCC_Model(object):
 
         # load traning data
         sample_w_noise = get_noisy_data(self.data)
+        if self.pre:
+            for epoch in xrange(config.epoch):
+                print('Epoch ({}/{})-------------------------------------------------'.format(epoch, config.epoch))
+                batch_idxs = min(len(self.data), config.train_size) // config.batch_size
 
-        for epoch in xrange(config.epoch):
-            print('Epoch ({}/{})-------------------------------------------------'.format(epoch, config.epoch))
-            batch_idxs = min(len(self.data), config.train_size) // config.batch_size
+                for idx in xrange(0, batch_idxs):
+                    batch = self.data[idx * config.batch_size:(idx + 1) * config.batch_size]
+                    batch_noise = sample_w_noise[idx * config.batch_size:(idx + 1) * config.batch_size]
+                    batch_images = np.array(batch).astype(np.float32)
+                    batch_noise_images = np.array(batch_noise).astype(np.float32)
+                    batch_z = np.random.uniform(-1, 1, [config.batch_size, self.z_dim]).astype(np.float32)
 
-            # for detecting valuable epoch that we must stop training step
-            # sample_input_for_test_each_train_step.npy
-            # sample_test = np.load('SIFTETS.npy').reshape([504,45,45,1])[0:128]
+                    # Update G network
+                    _, summary_str = self.sess.run([g_optim, self.g_sum],
+                                                   feed_dict={self.z: batch_noise_images})
+                    self.writer.add_summary(summary_str, counter)
 
-            for idx in xrange(0, batch_idxs):
-                batch = self.data[idx * config.batch_size:(idx + 1) * config.batch_size]
-                batch_noise = sample_w_noise[idx * config.batch_size:(idx + 1) * config.batch_size]
+                    errG = self.g_loss.eval({self.z: batch_noise_images})
+                    counter += 1
 
-                batch_images = np.array(batch).astype(np.float32)
-                batch_noise_images = np.array(batch_noise).astype(np.float32)
+                    msg = "Epoch:[%2d][%4d/%4d]--> g_loss: %.8f" % (
+                        epoch, idx, batch_idxs, errG)
+                    print(msg)
+                    logging.info(msg)
 
-                batch_z = np.random.uniform(-1, 1, [config.batch_size, self.z_dim]).astype(np.float32)
+                    if np.mod(counter, self.n_per_itr_print_results) == 0:
+                        samples, g_loss = self.sess.run(
+                            [self.sampler, self.g_loss],
+                            feed_dict={
+                                self.z: sample_inputs,
+                                self.inputs: sample_inputs
+                            }
+                        )
+                        manifold_h = int(np.ceil(np.sqrt(samples.shape[0])))
+                        manifold_w = int(np.floor(np.sqrt(samples.shape[0])))
+                        save_images(samples, [manifold_h, manifold_w],
+                                    './{}/train_{:02d}_{:04d}.png'.format(config.sample_dir, epoch, idx))
+                        print("[Sample] g_loss: %.8f" % (g_loss))
+                self.save('pretrain', epoch)
+        else:
+            for epoch in xrange(config.epoch):
+                print('Epoch ({}/{})-------------------------------------------------'.format(epoch, config.epoch))
+                batch_idxs = min(len(self.data), config.train_size) // config.batch_size
 
-                # Update D network
-                _, summary_str = self.sess.run([d_optim, self.d_sum],
-                                               feed_dict={self.inputs: batch_images, self.z: batch_noise_images})
-                self.writer.add_summary(summary_str, counter)
+                for idx in xrange(0, batch_idxs):
+                    batch = self.data[idx * config.batch_size:(idx + 1) * config.batch_size]
+                    batch_noise = sample_w_noise[idx * config.batch_size:(idx + 1) * config.batch_size]
+                    batch_images = np.array(batch).astype(np.float32)
+                    batch_noise_images = np.array(batch_noise).astype(np.float32)
+                    batch_z = np.random.uniform(-1, 1, [config.batch_size, self.z_dim]).astype(np.float32)
 
-                # Update G network
-                _, summary_str = self.sess.run([g_optim, self.g_sum],
-                                               feed_dict={self.z: batch_noise_images})
-                self.writer.add_summary(summary_str, counter)
+                    # Update D network
+                    _, summary_str = self.sess.run([d_optim, self.d_sum],
+                                                   feed_dict={self.inputs: batch_images, self.z: batch_noise_images})
+                    self.writer.add_summary(summary_str, counter)
 
-                # Run g_optim twice to make sure that d_loss does not go to zero (different from paper)
-                _, summary_str = self.sess.run([g_optim, self.g_sum],
-                                               feed_dict={self.z: batch_noise_images})
-                self.writer.add_summary(summary_str, counter)
+                    # Update G network
+                    _, summary_str = self.sess.run([g_optim, self.g_sum],
+                                                   feed_dict={self.z: batch_noise_images})
+                    self.writer.add_summary(summary_str, counter)
 
-                errD_fake = self.d_loss_fake.eval({self.z: batch_noise_images})
-                errD_real = self.d_loss_real.eval({self.inputs: batch_images})
-                errG = self.g_loss.eval({self.z: batch_noise_images})
-                counter += 1
+                    # Run g_optim twice to make sure that d_loss does not go to zero (different from paper)
+                    _, summary_str = self.sess.run([g_optim, self.g_sum],
+                                                   feed_dict={self.z: batch_noise_images})
+                    self.writer.add_summary(summary_str, counter)
 
-                msg = "Epoch:[%2d][%4d/%4d]--> d_loss: %.8f, g_loss: %.8f" % (
-                                epoch, idx, batch_idxs, errD_fake + errD_real, errG)
-                print(msg)
-                logging.info(msg)
+                    errD_fake = self.d_loss_fake.eval({self.z: batch_noise_images})
+                    errD_real = self.d_loss_real.eval({self.inputs: batch_images})
+                    errG = self.g_loss.eval({self.z: batch_noise_images})
+                    counter += 1
 
-                if np.mod(counter, self.n_per_itr_print_results) == 0:
-                    samples, d_loss, g_loss = self.sess.run(
-                        [self.sampler, self.d_loss, self.g_loss],
-                        feed_dict={
-                            self.z: sample_inputs,
-                            self.inputs: sample_inputs
-                        }
-                    )
-                    manifold_h = int(np.ceil(np.sqrt(samples.shape[0])))
-                    manifold_w = int(np.floor(np.sqrt(samples.shape[0])))
-                    save_images(samples, [manifold_h, manifold_w],
-                                './{}/train_{:02d}_{:04d}.png'.format(config.sample_dir, epoch, idx))
-                    print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss))
+                    msg = "Epoch:[%2d][%4d/%4d]--> d_loss: %.8f, g_loss: %.8f" % (
+                                    epoch, idx, batch_idxs, errD_fake + errD_real, errG)
+                    print(msg)
+                    logging.info(msg)
 
-            self.save(config.checkpoint_dir, epoch)
+                    if np.mod(counter, self.n_per_itr_print_results) == 0:
+                        samples, d_loss, g_loss = self.sess.run(
+                            [self.sampler, self.d_loss, self.g_loss],
+                            feed_dict={
+                                self.z: sample_inputs,
+                                self.inputs: sample_inputs
+                            }
+                        )
+                        manifold_h = int(np.ceil(np.sqrt(samples.shape[0])))
+                        manifold_w = int(np.floor(np.sqrt(samples.shape[0])))
+                        save_images(samples, [manifold_h, manifold_w],
+                                    './{}/train_{:02d}_{:04d}.png'.format(config.sample_dir, epoch, idx))
+                        print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss))
+
+                self.save(config.checkpoint_dir, epoch)
 
     # =========================================================================================================
     def discriminator(self, image, reuse=False):
