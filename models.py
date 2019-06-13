@@ -136,7 +136,7 @@ class ALOCC_Model(object):
             tf.nn.sigmoid_cross_entropy_with_logits(logits=self.D_logits_, labels=tf.ones_like(self.D_)))
 
         # Refinement loss
-        self.g_r_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=self.G, labels=self.z))
+        self.g_r_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=self.G, labels=inputs)) # self.z change to inputs
         self.g_loss = self.g_loss + self.g_r_loss * self.r_alpha
         self.d_loss = self.d_loss_real + self.d_loss_fake
 
@@ -175,11 +175,13 @@ class ALOCC_Model(object):
 
         self.writer = SummaryWriter(log_dir, self.sess.graph)
         sample = self.data[0:self.sample_num]
+        sample_w_noise = get_noisy_data(sample)
 
         # export images
         sample_inputs = np.array(sample).astype(np.float32)
         scipy.misc.imsave('./{}/train_input_samples.jpg'.format(config.sample_dir), montage(sample_inputs[:, :, :]))
-
+        sample_inputs_noise = np.array(sample_w_noise).astype(np.float32)
+        scipy.misc.imsave('./{}/noise_input_samples.jpg'.format(config.sample_dir), montage(sample_inputs_noise[:, :, :]))
         # load previous checkpoint
         counter = 1
         could_load, checkpoint_counter = self.load(self.checkpoint_dir)
@@ -193,7 +195,7 @@ class ALOCC_Model(object):
             print(" [!] Load failed...")
 
         # load traning data
-        sample_w_noise = get_noisy_data(self.data)
+        data_w_noise = get_noisy_data(self.data)
         if self.pre:
             for epoch in xrange(config.epoch):
                 print('Epoch ({}/{})-------------------------------------------------'.format(epoch, config.epoch))
@@ -201,17 +203,17 @@ class ALOCC_Model(object):
 
                 for idx in xrange(0, batch_idxs):
                     batch = self.data[idx * config.batch_size:(idx + 1) * config.batch_size]
-                    batch_noise = sample_w_noise[idx * config.batch_size:(idx + 1) * config.batch_size]
+                    batch_noise = data_w_noise[idx * config.batch_size:(idx + 1) * config.batch_size]
                     batch_images = np.array(batch).astype(np.float32)
                     batch_noise_images = np.array(batch_noise).astype(np.float32)
                     batch_z = np.random.uniform(-1, 1, [config.batch_size, self.z_dim]).astype(np.float32)
 
                     # Update G network
                     _, summary_str = self.sess.run([g_pre_optim, self.g_presum],
-                                                   feed_dict={self.z: batch_noise_images})
+                                                   feed_dict={self.inputs: batch_images, self.z: batch_noise_images})
                     self.writer.add_summary(summary_str, counter)
 
-                    errG = self.g_r_loss.eval({self.z: batch_noise_images})
+                    errG = self.g_r_loss.eval({self.inputs: batch_images, self.z: batch_noise_images})
                     counter += 1
 
                     msg = "Epoch:[%2d][%4d/%4d]--> g_loss: %.8f" % (
@@ -223,7 +225,7 @@ class ALOCC_Model(object):
                         samples, g_loss = self.sess.run(
                             [self.sampler, self.g_r_loss],
                             feed_dict={
-                                self.z: sample_inputs,
+                                self.z: sample_w_noise,
                                 self.inputs: sample_inputs
                             }
                         )
@@ -240,7 +242,7 @@ class ALOCC_Model(object):
 
                 for idx in xrange(0, batch_idxs):
                     batch = self.data[idx * config.batch_size:(idx + 1) * config.batch_size]
-                    batch_noise = sample_w_noise[idx * config.batch_size:(idx + 1) * config.batch_size]
+                    batch_noise = data_w_noise[idx * config.batch_size:(idx + 1) * config.batch_size]
                     batch_images = np.array(batch).astype(np.float32)
                     batch_noise_images = np.array(batch_noise).astype(np.float32)
                     batch_z = np.random.uniform(-1, 1, [config.batch_size, self.z_dim]).astype(np.float32)
@@ -252,17 +254,17 @@ class ALOCC_Model(object):
 
                     # Update G network
                     _, summary_str = self.sess.run([g_optim, self.g_sum],
-                                                   feed_dict={self.z: batch_noise_images})
+                                                   feed_dict={self.inputs: batch_images, self.z: batch_noise_images})
                     self.writer.add_summary(summary_str, counter)
 
                     # Run g_optim twice to make sure that d_loss does not go to zero (different from paper)
                     _, summary_str = self.sess.run([g_optim, self.g_sum],
-                                                   feed_dict={self.z: batch_noise_images})
+                                                   feed_dict={self.inputs: batch_images, self.z: batch_noise_images})
                     self.writer.add_summary(summary_str, counter)
 
                     errD_fake = self.d_loss_fake.eval({self.z: batch_noise_images})
                     errD_real = self.d_loss_real.eval({self.inputs: batch_images})
-                    errG = self.g_loss.eval({self.z: batch_noise_images})
+                    errG = self.g_loss.eval({self.inputs: batch_images, self.z: batch_noise_images})
                     counter += 1
 
                     msg = "Epoch:[%2d][%4d/%4d]--> d_loss: %.8f, g_loss: %.8f" % (

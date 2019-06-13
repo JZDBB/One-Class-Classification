@@ -22,7 +22,7 @@ IMAGE PROCESSING
 '''
 def get_noisy_data(data):
     lst_noisy = []
-    sigma = 0.155
+    sigma = 0.1
     for image in data:
         noisy = random_noise(image, var=sigma ** 2)
         lst_noisy.append(noisy)
