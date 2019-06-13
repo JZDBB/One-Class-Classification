@@ -201,7 +201,7 @@ class ALOCC_Model(object):
                 print('Epoch ({}/{})-------------------------------------------------'.format(epoch, config.epoch))
                 batch_idxs = min(len(self.data), config.train_size) // config.batch_size
 
-                for idx in xrange(0, batch_idxs):
+                for idx in range(0, batch_idxs):
                     batch = self.data[idx * config.batch_size:(idx + 1) * config.batch_size]
                     batch_noise = data_w_noise[idx * config.batch_size:(idx + 1) * config.batch_size]
                     batch_images = np.array(batch).astype(np.float32)
@@ -240,7 +240,7 @@ class ALOCC_Model(object):
                 print('Epoch ({}/{})-------------------------------------------------'.format(epoch, config.epoch))
                 batch_idxs = min(len(self.data), config.train_size) // config.batch_size
 
-                for idx in xrange(0, batch_idxs):
+                for idx in range(0, batch_idxs):
                     batch = self.data[idx * config.batch_size:(idx + 1) * config.batch_size]
                     batch_noise = data_w_noise[idx * config.batch_size:(idx + 1) * config.batch_size]
                     batch_images = np.array(batch).astype(np.float32)
@@ -315,8 +315,13 @@ class ALOCC_Model(object):
             hae1 = lrelu(self.g_bn5(conv2d(hae0, self.df_dim * 4, name='g_encoder_h1_conv')))
             hae2 = lrelu(self.g_bn6(conv2d(hae1, self.df_dim * 8, name='g_encoder_h2_conv')))
 
+            flat = tf.contrib.layers.flatten(hae2)
+            feature = tf.layers.dense(flat, units=256, name='g_mean')
+            z_develop = tf.layers.dense(feature, units=4 * 4 * 128)
+            net = tf.nn.relu(tf.reshape(z_develop, [-1, 4, 4, 128]))
+
             h2, self.h2_w, self.h2_b = deconv2d(
-                hae2, [self.batch_size, s_h4, s_w4, self.gf_dim * 2], name='g_decoder_h1', with_w=True)
+                net, [self.batch_size, s_h4, s_w4, self.gf_dim * 2], name='g_decoder_h1', with_w=True)
             h2 = tf.nn.relu(self.g_bn2(h2))
 
             h3, self.h3_w, self.h3_b = deconv2d(
@@ -326,7 +331,7 @@ class ALOCC_Model(object):
             h4, self.h4_w, self.h4_b = deconv2d(
                 h3, [self.batch_size, s_h, s_w, self.c_dim], name='g_decoder_h00', with_w=True)
 
-            return tf.nn.tanh(h4, name='g_output')
+            return tf.nn.tanh(h4, name='g_output'), feature
 
     # =========================================================================================================
     def sampler(self, z, y=None):
@@ -342,6 +347,11 @@ class ALOCC_Model(object):
             hae0 = lrelu(self.g_bn4(conv2d(z, self.df_dim * 2, name='g_encoder_h0_conv')))
             hae1 = lrelu(self.g_bn5(conv2d(hae0, self.df_dim * 4, name='g_encoder_h1_conv')))
             hae2 = lrelu(self.g_bn6(conv2d(hae1, self.df_dim * 8, name='g_encoder_h2_conv')))
+
+            flat = tf.contrib.layers.flatten(hae2)
+            feature = tf.layers.dense(flat, units=256, name='g_mean')
+            z_develop = tf.layers.dense(feature, units=4 * 4 * 128)
+            net = tf.nn.relu(tf.reshape(z_develop, [-1, 4, 4, 128]))
 
             h2, self.h2_w, self.h2_b = deconv2d(
                 hae2, [self.batch_size, s_h4, s_w4, self.gf_dim * 2], name='g_decoder_h1', with_w=True)
