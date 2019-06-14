@@ -7,6 +7,7 @@ from kh_tools import *
 import logging
 import matplotlib.pyplot as plt
 import read_data
+import numpy as np
 
 
 class ALOCC_Model(object):
@@ -103,6 +104,7 @@ class ALOCC_Model(object):
 
         self.build_model()
 
+
     # =========================================================================================================
     def build_model(self):
         image_dims = [self.input_height, self.input_width, self.c_dim]
@@ -116,10 +118,10 @@ class ALOCC_Model(object):
         self.z = tf.placeholder(tf.float32, [self.batch_size] + image_dims, name='z')
 
         self.G, _ = self.generator(self.z)
-        self.D, self.D_logits = self.discriminator(inputs)
+        self.D, self.D_logits, self.feature = self.discriminator(inputs)
 
         self.sampler = self.sampler(self.z)
-        self.D_, self.D_logits_ = self.discriminator(self.G, reuse=True)
+        self.D_, self.D_logits_, self.feature_ = self.discriminator(self.G, reuse=True)
 
         # tesorboard setting
         # self.z_sum = histogram_summary("z", self.z)
@@ -136,11 +138,11 @@ class ALOCC_Model(object):
             tf.nn.sigmoid_cross_entropy_with_logits(logits=self.D_logits_, labels=tf.ones_like(self.D_)))
 
         # center_loss for discriminator
-        self.logits = tf.concat([self.D_logits, self.D_logits_])
-        labels_real = tf.Variable(tf.ones([1, self.batch_size], tf.int64))
-        labels_fake = tf.Variable(tf.zeros([1, self.batch_size], tf.int64))
-        self.labels = tf.concat([labels_real, labels_fake])
-        self.center_loss, centers, self.centers_update_op = get_center_loss(self.logits, self.labels, 0.5, 2)
+        self.features = tf.concat([self.feature, self.feature_], axis=0)
+        # labels_real = tf.Variable(tf.ones([self.batch_size], tf.int64))
+        # labels_fake = tf.Variable(tf.zeros([self.batch_size], tf.int64))
+        self.labels = tf.placeholder(tf.int64, shape=(None), name='labels')
+        self.center_loss, centers, self.centers_update_op = get_center_loss(self.features, self.labels, 0.5, 2)
 
         # Refinement loss
         self.g_r_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=self.G, labels=inputs)) # self.z change to inputs
@@ -207,6 +209,9 @@ class ALOCC_Model(object):
 
         # load traning data
         data_w_noise = get_noisy_data(self.data)
+        # labels for center loss
+        labels = np.hstack((np.ones(128).astype('int64'), np.zeros(128).astype('int64')))
+
         if self.pre:
             for epoch in xrange(config.epoch):
                 print('Epoch ({}/{})-------------------------------------------------'.format(epoch, config.epoch))
@@ -260,33 +265,35 @@ class ALOCC_Model(object):
 
                     # Update D network
                     _, summary_str = self.sess.run([d_optim, self.d_sum],
-                                                   feed_dict={self.inputs: batch_images, self.z: batch_noise_images})
+                                                   feed_dict={self.labels: labels, self.inputs: batch_images, self.z: batch_noise_images})
                     self.writer.add_summary(summary_str, counter)
 
                     # Update G network
                     _, summary_str = self.sess.run([g_optim, self.g_sum],
-                                                   feed_dict={self.inputs: batch_images, self.z: batch_noise_images})
+                                                   feed_dict={self.labels: labels,self.inputs: batch_images, self.z: batch_noise_images})
                     self.writer.add_summary(summary_str, counter)
 
                     # Run g_optim twice to make sure that d_loss does not go to zero (different from paper)
                     _, summary_str = self.sess.run([g_optim, self.g_sum],
-                                                   feed_dict={self.inputs: batch_images, self.z: batch_noise_images})
+                                                   feed_dict={self.labels: labels,self.inputs: batch_images, self.z: batch_noise_images})
                     self.writer.add_summary(summary_str, counter)
 
                     errD_fake = self.d_loss_fake.eval({self.z: batch_noise_images})
                     errD_real = self.d_loss_real.eval({self.inputs: batch_images})
                     errG = self.g_loss.eval({self.inputs: batch_images, self.z: batch_noise_images})
+                    errCenter = self.center_loss.eval({self.labels: labels, self.inputs: batch_images, self.z: batch_noise_images})
                     counter += 1
 
-                    msg = "Epoch:[%2d][%4d/%4d]--> d_loss: %.8f, g_loss: %.8f" % (
-                        epoch, idx, batch_idxs, errD_fake + errD_real, errG)
+                    msg = "Epoch:[%2d][%4d/%4d]--> d_loss: %.8f, g_loss: %.8f, center_loss: %.8f" % (
+                        epoch, idx, batch_idxs, errD_fake + errD_real, errG, errCenter)
                     print(msg)
                     logging.info(msg)
 
                     if np.mod(counter, self.n_per_itr_print_results) == 0:
-                        samples, d_loss, g_loss = self.sess.run(
-                            [self.sampler, self.d_loss, self.g_loss],
+                        samples, d_loss, g_loss, center = self.sess.run(
+                            [self.sampler, self.d_loss, self.g_loss, self.center_loss],
                             feed_dict={
+                                self.labels: labels,
                                 self.z: sample_inputs,
                                 self.inputs: sample_inputs
                             }
@@ -295,7 +302,7 @@ class ALOCC_Model(object):
                         manifold_w = int(np.floor(np.sqrt(samples.shape[0])))
                         save_images(samples, [manifold_h, manifold_w],
                                     './{}/train_{:02d}_{:04d}.png'.format(config.sample_dir, epoch, idx))
-                        print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss))
+                        print("[Sample] d_loss: %.8f, g_loss: %.8f, center_loss:%.8f" % (d_loss, g_loss, center))
 
                 self.save(config.checkpoint_dir, epoch)
 
@@ -309,9 +316,10 @@ class ALOCC_Model(object):
             h1 = lrelu(self.d_bn1(conv2d(h0, self.df_dim * 2, name='d_h1_conv')))
             h2 = lrelu(self.d_bn2(conv2d(h1, self.df_dim * 4, name='d_h2_conv')))
             h3 = lrelu(self.d_bn3(conv2d(h2, self.df_dim * 8, name='d_h3_conv')))
-            h4 = linear(tf.reshape(h3, [self.batch_size, -1]), 1, 'd_h3_lin')
-            h5 = tf.nn.sigmoid(h4, name='d_output')
-            return h5, h4
+            h4 = linear(tf.reshape(h3, [self.batch_size, -1]), 16, 'd_h4_lin')
+            h5 = linear(tf.reshape(h4, [self.batch_size, -1]), 1, 'd_h5_lin')
+            h6 = tf.nn.sigmoid(h5, name='d_output')
+            return h6, h5, h4
 
     # =========================================================================================================
     def generator(self, z):
