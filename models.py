@@ -115,7 +115,7 @@ class ALOCC_Model(object):
 
         self.z = tf.placeholder(tf.float32, [self.batch_size] + image_dims, name='z')
 
-        self.G = self.generator(self.z)
+        self.G, _ = self.generator(self.z)
         self.D, self.D_logits = self.discriminator(inputs)
 
         self.sampler = self.sampler(self.z)
@@ -135,14 +135,22 @@ class ALOCC_Model(object):
         self.g_loss = tf.reduce_mean(
             tf.nn.sigmoid_cross_entropy_with_logits(logits=self.D_logits_, labels=tf.ones_like(self.D_)))
 
+        # center_loss for discriminator
+        self.logits = tf.concat([self.D_logits, self.D_logits_])
+        labels_real = tf.Variable(tf.ones([1, self.batch_size], tf.int64))
+        labels_fake = tf.Variable(tf.zeros([1, self.batch_size], tf.int64))
+        self.labels = tf.concat([labels_real, labels_fake])
+        self.center_loss, centers, self.centers_update_op = get_center_loss(self.logits, self.labels, 0.5, 2)
+
         # Refinement loss
         self.g_r_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=self.G, labels=inputs)) # self.z change to inputs
         self.g_loss = self.g_loss + self.g_r_loss * self.r_alpha
-        self.d_loss = self.d_loss_real + self.d_loss_fake
+        self.d_loss = self.d_loss_real + self.d_loss_fake + self.center_loss * 0.5
 
         self.g_preloss_sum = scalar_summary("g_preloss", self.g_r_loss)
         self.d_loss_real_sum = scalar_summary("d_loss_real", self.d_loss_real)
         self.d_loss_fake_sum = scalar_summary("d_loss_fake", self.d_loss_fake)
+        self.center_loss_sum = scalar_summary("center_loss", self.center_loss)
         self.g_loss_sum = scalar_summary("g_loss", self.g_loss)
         self.d_loss_sum = scalar_summary("d_loss", self.d_loss)
 
@@ -153,9 +161,12 @@ class ALOCC_Model(object):
 
     # =========================================================================================================
     def train(self, config):
+
         g_pre_optim = tf.train.RMSPropOptimizer(config.learning_rate).minimize(self.g_r_loss, var_list=self.g_vars)
-        d_optim = tf.train.RMSPropOptimizer(config.learning_rate).minimize(self.d_loss, var_list=self.d_vars)
-        g_optim = tf.train.RMSPropOptimizer(config.learning_rate).minimize(self.g_loss, var_list=self.g_vars)
+        with tf.control_dependencies([self.centers_update_op]):
+        # train_op = optimizer.minimize(total_loss, global_step=global_step)
+            d_optim = tf.train.RMSPropOptimizer(config.learning_rate).minimize(self.d_loss, var_list=self.d_vars)
+            g_optim = tf.train.RMSPropOptimizer(config.learning_rate).minimize(self.g_loss, var_list=self.g_vars)
 
         try:
             tf.global_variables_initializer().run()
@@ -166,7 +177,7 @@ class ALOCC_Model(object):
 
         self.g_sum = merge_summary([self.d_loss_fake_sum, self.g_loss_sum])
         self.g_presum = merge_summary([self.g_preloss_sum])
-        self.d_sum = merge_summary([self.d_loss_real_sum, self.d_loss_sum])
+        self.d_sum = merge_summary([self.d_loss_real_sum, self.d_loss_sum, self.center_loss_sum])
 
         log_dir = os.path.join(self.log_dir, self.model_dir)
 
