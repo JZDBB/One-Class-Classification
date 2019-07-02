@@ -289,6 +289,44 @@ class ALOCC_Model(object):
                 self.save(config.checkpoint_dir, epoch)
 
     # =========================================================================================================
+    def test(self, config):
+        try:
+            tf.global_variables_initializer().run()
+        except:
+            tf.initialize_all_variables().run()
+
+        self.saver = tf.train.Saver()
+        # load previous checkpoint
+        counter = 1
+        could_load, checkpoint_counter = self.load(self.checkpoint_dir)
+        could_load_pre, _ = self.load(self.pre_dir)
+        if could_load:
+            counter = checkpoint_counter
+            print(" [*] Load model SUCCESS")
+        elif could_load_pre:
+            print(" [*] Load pretrain model SUCCESS")
+        else:
+            print(" [!] Load failed...")
+            return
+
+        # load traning data
+        data_w_noise = get_noisy_data(self.data)
+        batch_idxs = min(len(self.data), config.train_size) // config.batch_size
+        for idx in range(0, batch_idxs):
+            batch = self.data[idx * config.batch_size:(idx + 1) * config.batch_size]
+            batch_noise = data_w_noise[idx * config.batch_size:(idx + 1) * config.batch_size]
+            batch_images = np.array(batch).astype(np.float32)
+            batch_noise_images = np.array(batch_noise).astype(np.float32)
+
+            D_real, D_fake = self.sess.run([self.D_logits, self.D_logits_],
+                                           feed_dict={
+                                               self.z: batch_images,
+                                           }
+                                           )
+            print(D_real, D_fake)
+
+
+    # =========================================================================================================
     def discriminator(self, image, reuse=False):
         with tf.variable_scope("discriminator") as scope:
             if reuse:
@@ -427,7 +465,7 @@ class ALOCC_Model(object):
     def f_test_frozen_model(self, lst_image_slices=[]):
         lst_generated_img = []
         lst_discriminator_v = []
-        tmp_shape = lst_image_slices.shape
+        # tmp_shape = lst_image_slices.shape
         tmp_lst_slices = lst_image_slices
         batch_idxs = len(tmp_lst_slices) // self.batch_size
 
@@ -447,6 +485,12 @@ class ALOCC_Model(object):
             lst_generated_img.extend(results_g)
             print('finish pp ... {}/{}'.format(i, batch_idxs))
 
-        scipy.misc.imsave('./' + self.sample_dir + '/ALOCC_generated.jpg',
-                          montage(np.array(lst_generated_img)[:, :, :, 0]))
-        scipy.misc.imsave('./' + self.sample_dir + '/ALOCC_input.jpg', montage(np.array(tmp_lst_slices)[:, :, :, 0]))
+        manifold_h = int(np.ceil(np.sqrt(results_g.shape[0])))
+        manifold_w = int(np.floor(np.sqrt(results_g.shape[0])))
+        save_images(results_g, [manifold_h, manifold_w],
+                    './' + self.sample_dir + '/ALOCC_generated.jpg')
+        save_images(tmp_lst_slices, [manifold_h, manifold_w],
+                    './' + self.sample_dir + '/ALOCC_input.jpg')
+        # scipy.misc.imsave('./' + self.sample_dir + '/ALOCC_generated.jpg',
+        #                   montage(np.array(lst_generated_img)[:, :, :, 0]))
+        # scipy.misc.imsave('./' + self.sample_dir + '/ALOCC_input.jpg', montage(np.array(tmp_lst_slices)[:, :, :, 0]))
