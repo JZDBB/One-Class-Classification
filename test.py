@@ -10,8 +10,7 @@ from utils import *
 import time
 import os
 import read_data
-from sklearn.metrics import confusion_matrix
-
+from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score
 flags = tf.app.flags
 flags.DEFINE_integer("epoch", 1, "Epoch to train [25]")
 flags.DEFINE_float("learning_rate", 0, "Learning rate of for adam [0.0002]")
@@ -149,6 +148,11 @@ def main(_):
                     lst_prob[x] = 0
             C = confusion_matrix(labels, lst_prob)
             print(C)
+            print('accuracy: {:.3f}, precision: {:.3f}, recall: {:.3f}, f1 score: {:.3f}'
+                  .format(accuracy_score(labels, lst_prob),
+                          precision_score(labels, lst_prob, average='macro'),
+                          recall_score(labels, lst_prob, average='macro'),
+                          f1_score(labels, lst_prob, average='weighted')))
             print('check is ok')
             exit()
 
