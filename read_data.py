@@ -39,7 +39,7 @@ def read_data(labels):
     train_data = np.reshape(train_data, [-1, 32, 32, 3], 'F')
     # train_data = np.dot(train_data[..., :3], [0.299, 0.587, 0.114])
     # train_data = np.reshape(train_data, [-1, 32, 32, 1])
-    train_data = train_data / 255.0
+    train_data = train_data / 128.0 - 1
     train_data = np.transpose(train_data, [0, 2, 1, 3])
     # train_data = (train_data - 128) /128.0
     return train_data
@@ -57,16 +57,26 @@ def test_data(labels):
     ten_precent_anomaly = np.array(ten_precent_anomaly)
 
     test_data1 = test_data[specific_idx]
+    test_labels = np.array(test_labels)
+    test_label1 = test_labels[specific_idx]
     tmp_data = test_data[ten_precent_anomaly]
     test_data = np.append(test_data1, tmp_data, axis=0)
+    test_label2 = test_labels[ten_precent_anomaly]
+    test_label = np.append(test_label1, test_label2, axis=0)
     test_data = np.reshape(test_data, [-1, 32, 32, 3], 'F')
-
     test_data = np.transpose(test_data, [0, 2, 1, 3])
     # plt.imshow(test_data[0])
     # plt.show()
-    test_data = test_data / 255.0
+    test_data = test_data / 128.0 - 1
+    test_label.tolist()
+    test_label = list(test_label)
+    for i in range(len(test_label)):
+        if test_label[i] == labels:
+            test_label[i] = 1
+        else:
+            test_label[i] = 0
 
-    return test_data
+    return test_data, test_label
 
-# cifar = read_data(1)
+# cifar = test_data(1)
 # a = 1

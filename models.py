@@ -465,7 +465,7 @@ class ALOCC_Model(object):
     def f_test_frozen_model(self, lst_image_slices=[]):
         lst_generated_img = []
         lst_discriminator_v = []
-        # tmp_shape = lst_image_slices.shape
+        tmp_shape = lst_image_slices.shape
         tmp_lst_slices = lst_image_slices
         batch_idxs = len(tmp_lst_slices) // self.batch_size
 
@@ -474,7 +474,8 @@ class ALOCC_Model(object):
             batch_data = tmp_lst_slices[i * self.batch_size:(i + 1) * self.batch_size]
 
             results_g = self.sess.run(self.G, feed_dict={self.z: batch_data})
-            results_d = self.sess.run(self.D_logits, feed_dict={self.inputs: batch_data})
+            results_d = self.sess.run(self.D_, feed_dict={self.inputs: batch_data,
+                                                          self.z: batch_data})
             # results = self.sess.run(self.sampler, feed_dict={self.z: batch_data})
 
             # to log some images with d values
@@ -491,6 +492,12 @@ class ALOCC_Model(object):
                     './' + self.sample_dir + '/ALOCC_generated.jpg')
         save_images(tmp_lst_slices, [manifold_h, manifold_w],
                     './' + self.sample_dir + '/ALOCC_input.jpg')
+
+        # lst_generated_img = (lst_generated_img + 1.) / 2.
+        # tmp_lst_slices = (tmp_lst_slices + 1.) / 2.
+        #
         # scipy.misc.imsave('./' + self.sample_dir + '/ALOCC_generated.jpg',
-        #                   montage(np.array(lst_generated_img)[:, :, :, 0]))
-        # scipy.misc.imsave('./' + self.sample_dir + '/ALOCC_input.jpg', montage(np.array(tmp_lst_slices)[:, :, :, 0]))
+        #                   montage(np.array(lst_generated_img)[:, :, :, :]))
+        # scipy.misc.imsave('./' + self.sample_dir + '/ALOCC_input.jpg', montage(np.array(tmp_lst_slices)[:, :, :, :]))
+
+        return lst_discriminator_v
