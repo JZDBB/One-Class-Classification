@@ -13,11 +13,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="models.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="models.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/models.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="222">
-              <caret line="488" column="62" lean-forward="true" selection-start-line="488" selection-start-column="62" selection-end-line="488" selection-end-column="62" />
+            <state relative-caret-position="147">
+              <caret line="485" column="40" selection-start-line="485" selection-start-column="40" selection-end-line="485" selection-end-column="40" />
               <folding>
                 <element signature="e#0#31#0" expanded="true" />
                 <element signature="e#6979#14309#0" />
@@ -28,11 +28,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="test.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="test.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/test.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1211">
-              <caret line="196" lean-forward="true" selection-start-line="196" selection-end-line="196" />
+            <state relative-caret-position="252">
+              <caret line="200" selection-start-line="200" selection-end-line="200" />
               <folding>
                 <element signature="e#0#23#0" expanded="true" />
               </folding>
@@ -122,17 +122,16 @@
         <option value="$PROJECT_DIR$/train.py" />
         <option value="$PROJECT_DIR$/test11.py" />
         <option value="$PROJECT_DIR$/test-cifar-10.py" />
-        <option value="$PROJECT_DIR$/test.py" />
         <option value="$PROJECT_DIR$/read_data.py" />
         <option value="$PROJECT_DIR$/models.py" />
+        <option value="$PROJECT_DIR$/test.py" />
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="12" />
-    <option name="y" value="30" />
-    <option name="width" value="1539" />
-    <option name="height" value="921" />
+  <component name="ProjectFrameBounds" extendedState="7">
+    <option name="x" value="735" />
+    <option name="width" value="1194" />
+    <option name="height" value="1032" />
   </component>
   <component name="ProjectView">
     <navigator proportions="" version="1">
@@ -154,7 +153,7 @@
     </panes>
   </component>
   <component name="PropertiesComponent">
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../AE_CenterLoss" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../Python-ZeroToAll" />
     <property name="settings.editor.selected.configurable" value="preferences.sourceCode.Python" />
   </component>
   <component name="RecentsManager">
@@ -236,7 +235,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-7" y="-7" width="1295" height="695" extended-state="6" />
+    <frame x="-7" y="-7" width="1295" height="695" extended-state="7" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.15091342" />
       <window_info anchor="bottom" id="TODO" order="6" />
@@ -713,16 +712,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/test.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1211">
-          <caret line="196" lean-forward="true" selection-start-line="196" selection-end-line="196" />
-          <folding>
-            <element signature="e#0#23#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/read_data.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="461">
@@ -735,13 +724,23 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/models.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="222">
-          <caret line="488" column="62" lean-forward="true" selection-start-line="488" selection-start-column="62" selection-end-line="488" selection-end-column="62" />
+        <state relative-caret-position="147">
+          <caret line="485" column="40" selection-start-line="485" selection-start-column="40" selection-end-line="485" selection-end-column="40" />
           <folding>
             <element signature="e#0#31#0" expanded="true" />
             <element signature="e#6979#14309#0" />
             <element signature="e#14459#15903#0" />
             <element signature="e#16075#16658#0" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/test.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="252">
+          <caret line="200" selection-start-line="200" selection-end-line="200" />
+          <folding>
+            <element signature="e#0#23#0" expanded="true" />
           </folding>
         </state>
       </provider>

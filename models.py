@@ -96,7 +96,7 @@ class ALOCC_Model(object):
             self.data = mnist.train.images[specific_idx].reshape(-1, 28, 28, 1)
             self.c_dim = 1
         elif self.dataset_name == 'cifar-10':
-            self.data = read_data.read_data(1)
+            self.data = read_data.read_data(self.attention_label)
             self.c_dim = 3
         else:
             assert ('Error in loading dataset')
@@ -143,6 +143,7 @@ class ALOCC_Model(object):
         self.g_preloss_sum = scalar_summary("g_preloss", self.g_r_loss)
         self.d_loss_real_sum = scalar_summary("d_loss_real", self.d_loss_real)
         self.d_loss_fake_sum = scalar_summary("d_loss_fake", self.d_loss_fake)
+        self.g_r_loss_sum = scalar_summary("g_r_loss", self.g_r_loss)
         self.g_loss_sum = scalar_summary("g_loss", self.g_loss)
         self.d_loss_sum = scalar_summary("d_loss", self.d_loss)
 
@@ -164,7 +165,7 @@ class ALOCC_Model(object):
 
         self.saver = tf.train.Saver()
 
-        self.g_sum = merge_summary([self.d_loss_fake_sum, self.g_loss_sum])
+        self.g_sum = merge_summary([self.d_loss_fake_sum, self.g_loss_sum, self.g_r_loss_sum])
         self.g_presum = merge_summary([self.g_preloss_sum])
         self.d_sum = merge_summary([self.d_loss_real_sum, self.d_loss_sum])
 
@@ -179,9 +180,10 @@ class ALOCC_Model(object):
 
         # export images
         sample_inputs = np.array(sample).astype(np.float32)
+        sample_inputs = (sample_inputs + 1.) / 2.
         scipy.misc.imsave('./{}/train_input_samples.jpg'.format(config.sample_dir), montage(sample_inputs[:, :, :]))
-        sample_inputs_noise = np.array(sample_w_noise).astype(np.float32)
-        scipy.misc.imsave('./{}/noise_input_samples.jpg'.format(config.sample_dir), montage(sample_inputs_noise[:, :, :]))
+        # sample_inputs_noise = np.array(sample_w_noise).astype(np.float32)
+        # scipy.misc.imsave('./{}/noise_input_samples.jpg'.format(config.sample_dir), montage(sample_inputs_noise[:, :, :]))
         # load previous checkpoint
         counter = 1
         could_load, checkpoint_counter = self.load(self.checkpoint_dir)
@@ -189,7 +191,7 @@ class ALOCC_Model(object):
         if could_load:
             counter = checkpoint_counter
             print(" [*] Load model SUCCESS")
-        elif could_load_pre:
+        if could_load_pre:
             print(" [*] Load pretrain model SUCCESS")
         else:
             print(" [!] Load failed...")
@@ -210,10 +212,10 @@ class ALOCC_Model(object):
 
                     # Update G network
                     _, summary_str = self.sess.run([g_pre_optim, self.g_presum],
-                                                   feed_dict={self.inputs: batch_images, self.z: batch_noise_images})
+                                                   feed_dict={self.inputs: batch_images, self.z: batch_images})
                     self.writer.add_summary(summary_str, counter)
 
-                    errG = self.g_r_loss.eval({self.inputs: batch_images, self.z: batch_noise_images})
+                    errG = self.g_r_loss.eval({self.inputs: batch_images, self.z: batch_images})
                     counter += 1
 
                     msg = "Epoch:[%2d][%4d/%4d]--> g_loss: %.8f" % (
@@ -287,44 +289,6 @@ class ALOCC_Model(object):
                         print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss))
 
                 self.save(config.checkpoint_dir, epoch)
-
-    # =========================================================================================================
-    def test(self, config):
-        try:
-            tf.global_variables_initializer().run()
-        except:
-            tf.initialize_all_variables().run()
-
-        self.saver = tf.train.Saver()
-        # load previous checkpoint
-        counter = 1
-        could_load, checkpoint_counter = self.load(self.checkpoint_dir)
-        could_load_pre, _ = self.load(self.pre_dir)
-        if could_load:
-            counter = checkpoint_counter
-            print(" [*] Load model SUCCESS")
-        elif could_load_pre:
-            print(" [*] Load pretrain model SUCCESS")
-        else:
-            print(" [!] Load failed...")
-            return
-
-        # load traning data
-        data_w_noise = get_noisy_data(self.data)
-        batch_idxs = min(len(self.data), config.train_size) // config.batch_size
-        for idx in range(0, batch_idxs):
-            batch = self.data[idx * config.batch_size:(idx + 1) * config.batch_size]
-            batch_noise = data_w_noise[idx * config.batch_size:(idx + 1) * config.batch_size]
-            batch_images = np.array(batch).astype(np.float32)
-            batch_noise_images = np.array(batch_noise).astype(np.float32)
-
-            D_real, D_fake = self.sess.run([self.D_logits, self.D_logits_],
-                                           feed_dict={
-                                               self.z: batch_images,
-                                           }
-                                           )
-            print(D_real, D_fake)
-
 
     # =========================================================================================================
     def discriminator(self, image, reuse=False):
@@ -403,15 +367,14 @@ class ALOCC_Model(object):
 
     # =========================================================================================================
     def save(self, checkpoint_dir, step):
-        model_name = "ALOCC_Model.model"
+        model_name = "ALOCC_Model-{:02d}.model".format(step)
         checkpoint_dir = os.path.join(checkpoint_dir, self.model_dir)
 
         if not os.path.exists(checkpoint_dir):
             os.makedirs(checkpoint_dir)
 
         self.saver.save(self.sess,
-                        os.path.join(checkpoint_dir, model_name),
-                        global_step=step)
+                        os.path.join(checkpoint_dir, model_name))
 
     # =========================================================================================================
     def load(self, checkpoint_dir):
