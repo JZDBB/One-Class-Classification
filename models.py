@@ -163,12 +163,13 @@ class ALOCC_Model(object):
         except:
             tf.initialize_all_variables().run()
 
-        self.saver = tf.train.Saver()
+        self.saver = tf.train.Saver(max_to_keep=50)
 
         self.g_sum = merge_summary([self.d_loss_fake_sum, self.g_loss_sum, self.g_r_loss_sum])
         self.g_presum = merge_summary([self.g_preloss_sum])
         self.d_sum = merge_summary([self.d_loss_real_sum, self.d_loss_sum])
 
+        # self.model_dir = self.model_dir + '-' + str(self.attention_label)
         log_dir = os.path.join(self.log_dir, self.model_dir)
 
         if not os.path.exists(log_dir):
@@ -361,9 +362,9 @@ class ALOCC_Model(object):
     # =========================================================================================================
     @property
     def model_dir(self):
-        return "{}_{}_{}_{}".format(
+        return "{}_{}_{}_{}_base{}".format(
             self.dataset_name, self.batch_size,
-            self.output_height, self.output_width)
+            self.output_height, self.output_width, self.attention_label)
 
     # =========================================================================================================
     def save(self, checkpoint_dir, step):

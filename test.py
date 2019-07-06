@@ -15,7 +15,7 @@ flags = tf.app.flags
 flags.DEFINE_integer("epoch", 1, "Epoch to train [25]")
 flags.DEFINE_float("learning_rate", 0, "Learning rate of for adam [0.0002]")
 flags.DEFINE_float("beta1", 0.5, "Momentum term of adam [0.5]")
-flags.DEFINE_integer("attention_label", 3, "Conditioned label that growth attention of training label [1]")
+flags.DEFINE_integer("attention_label", 0, "Conditioned label that growth attention of training label [1]")
 flags.DEFINE_float("r_alpha", 0.2, "Refinement parameter [0.2]")
 flags.DEFINE_integer("train_size", 5000, "The size of train images [np.inf]")
 flags.DEFINE_integer("batch_size", 128, "The size of batch images [64]")
@@ -138,11 +138,11 @@ def main(_):
             exit()
             #generated_data = tmp_ALOCC_model.feed2generator(data[0:FLAGS.batch_size])
         else:
-            data, labels = read_data.test_data(1)
+            data, labels = read_data.test_data(FLAGS.attention_label)
             # np.random.shuffle(data)
             lst_prob = tmp_ALOCC_model.f_test_frozen_model(data)
             for x in range(len(lst_prob)):
-                if lst_prob[x] > 0.45:
+                if lst_prob[x] > 0.492:
                     lst_prob[x] = 1
                 else:
                     lst_prob[x] = 0
