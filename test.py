@@ -11,6 +11,8 @@ import time
 import os
 import read_data
 from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score
+import logging
+
 flags = tf.app.flags
 flags.DEFINE_integer("epoch", 1, "Epoch to train [25]")
 flags.DEFINE_float("learning_rate", 0, "Learning rate of for adam [0.0002]")
@@ -26,7 +28,7 @@ flags.DEFINE_integer("output_width", None, "The size of the output images to pro
 flags.DEFINE_string("dataset", "UCSD", "The name of dataset [UCSD, mnist]")
 flags.DEFINE_string("dataset_address", "./dataset/UCSD_Anomaly_Dataset.v1p2/UCSDped2/Test", "The path of dataset")
 flags.DEFINE_string("input_fname_pattern", "*", "Glob pattern of filename of input images [*]")
-flags.DEFINE_string("checkpoint_dir", "./checkpoint/cifar-10_128_32_32/", "Directory name to save the checkpoints [checkpoint]")
+flags.DEFINE_string("checkpoint_dir", "./checkpoint/cifar-10_128_32_32_base0/", "Directory name to save the checkpoints [checkpoint]")
 flags.DEFINE_string("log_dir", "log", "Directory name to save the log [log]")
 flags.DEFINE_string("sample_dir", "samples", "Directory name to save the image samples [samples]")
 flags.DEFINE_boolean("train", False, "True for training, False for testing [False]")
@@ -86,101 +88,136 @@ def main(_):
     FLAGS.epoch = 1
     FLAGS.batch_size = 100
 
+    message = []
+    total = []
+    acc = 0
+    pres = 0
+    recall = 0
+    f1 = 0
 
-    gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.1)
-    run_config = tf.ConfigProto(gpu_options=gpu_options)
-    run_config.gpu_options.allow_growth=True
-    with tf.Session(config=run_config) as sess:
-        tmp_ALOCC_model = ALOCC_Model(
-                    sess,
-                    input_width=FLAGS.input_width,
-                    input_height=FLAGS.input_height,
-                    output_width=FLAGS.output_width,
-                    output_height=FLAGS.output_height,
-                    batch_size=FLAGS.batch_size,
-                    sample_num=FLAGS.batch_size,
-                    attention_label=FLAGS.attention_label,
-                    r_alpha=FLAGS.r_alpha,
-                    is_training=FLAGS.train,
-                    dataset_name=FLAGS.dataset,
-                    dataset_address=FLAGS.dataset_address,
-                    input_fname_pattern=FLAGS.input_fname_pattern,
-                    checkpoint_dir=FLAGS.checkpoint_dir,
-                    sample_dir=FLAGS.sample_dir,
-                    nd_patch_size=nd_patch_size,
-                    n_stride=n_stride,
-                    n_per_itr_print_results=n_per_itr_print_results,
-                    kb_work_on_patch=kb_work_on_patch,
-                    nd_input_frame_size = nd_input_frame_size,
-                    n_fetch_data=n_fetch_data)
+    for i in range(10):
+        FLAGS.attention_label = i
+        FLAGS.sample_dir = 'samples/'
 
-        show_all_variables()
+        gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.1)
+        run_config = tf.ConfigProto(gpu_options=gpu_options)
+        run_config.gpu_options.allow_growth=True
+        tf.reset_default_graph()
 
+        with tf.Session(config=run_config) as sess:
+            tmp_ALOCC_model = ALOCC_Model(
+                        sess,
+                        input_width=FLAGS.input_width,
+                        input_height=FLAGS.input_height,
+                        output_width=FLAGS.output_width,
+                        output_height=FLAGS.output_height,
+                        batch_size=FLAGS.batch_size,
+                        sample_num=FLAGS.batch_size,
+                        attention_label=FLAGS.attention_label,
+                        r_alpha=FLAGS.r_alpha,
+                        is_training=FLAGS.train,
+                        dataset_name=FLAGS.dataset,
+                        dataset_address=FLAGS.dataset_address,
+                        input_fname_pattern=FLAGS.input_fname_pattern,
+                        checkpoint_dir=FLAGS.checkpoint_dir,
+                        sample_dir=FLAGS.sample_dir,
+                        nd_patch_size=nd_patch_size,
+                        n_stride=n_stride,
+                        n_per_itr_print_results=n_per_itr_print_results,
+                        kb_work_on_patch=kb_work_on_patch,
+                        nd_input_frame_size = nd_input_frame_size,
+                        n_fetch_data=n_fetch_data)
 
-        print('--------------------------------------------------')
-        print('Load Pretrained Model...')
-        tmp_ALOCC_model.f_check_checkpoint()
-
-        if FLAGS.dataset=='mnist':
-            mnist = input_data.read_data_sets(FLAGS.dataset_address)
-
-            specific_idx_anomaly = np.where(mnist.train.labels != 6)[0]
-            specific_idx = np.where(mnist.train.labels == 6)[0]
-            ten_precent_anomaly = [specific_idx_anomaly[x] for x in
-                                   random.sample(range(0, len(specific_idx_anomaly)), len(specific_idx) // 40)]
-
-            data = mnist.train.images[specific_idx].reshape(-1, 28, 28, 1)
-            tmp_data = mnist.train.images[ten_precent_anomaly].reshape(-1, 28, 28, 1)
-            data = np.append(data, tmp_data).reshape(-1, 28, 28, 1)
-
-            lst_prob = tmp_ALOCC_model.f_test_frozen_model(data[0:FLAGS.batch_size])
-            print('check is ok')
-            exit()
-            #generated_data = tmp_ALOCC_model.feed2generator(data[0:FLAGS.batch_size])
-        else:
-            data, labels = read_data.test_data(FLAGS.attention_label)
-            # np.random.shuffle(data)
-            lst_prob = tmp_ALOCC_model.f_test_frozen_model(data)
-            for x in range(len(lst_prob)):
-                if lst_prob[x] > 0.492:
-                    lst_prob[x] = 1
-                else:
-                    lst_prob[x] = 0
-            C = confusion_matrix(labels, lst_prob)
-            print(C)
-            print('accuracy: {:.3f}, precision: {:.3f}, recall: {:.3f}, f1 score: {:.3f}'
-                  .format(accuracy_score(labels, lst_prob),
-                          precision_score(labels, lst_prob, average='macro'),
-                          recall_score(labels, lst_prob, average='macro'),
-                          f1_score(labels, lst_prob, average='weighted')))
-            print('check is ok')
-            exit()
-
-        # else in UCDS (depends on infrustructure)
-        # for s_image_dirs in sorted(glob(os.path.join(FLAGS.dataset_address, 'Test[0-9][0-9][0-9]'))):
-        #     tmp_lst_image_paths = []
-        #     if os.path.basename(s_image_dirs) not in ['Test004']:
-        #        print('Skip ',os.path.basename(s_image_dirs))
-        #        continue
-        #     for s_image_dir_files in sorted(glob(os.path.join(s_image_dirs + '/*'))):
-        #         if os.path.basename(s_image_dir_files) not in ['068.tif']:
-        #             print('Skip ', os.path.basename(s_image_dir_files))
-        #             continue
-        #         tmp_lst_image_paths.append(s_image_dir_files)
+            show_all_variables()
 
 
-            #random
-            #lst_image_paths = [tmp_lst_image_paths[x] for x in random.sample(range(0, len(tmp_lst_image_paths)), n_fetch_data)]
-            # lst_image_paths = tmp_lst_image_paths
-            # #images =read_lst_images(lst_image_paths,nd_patch_size,nd_patch_step,b_work_on_patch=False)
-            # images = read_lst_images_w_noise2(lst_image_paths, nd_patch_size, nd_patch_step)
-            #
-            # lst_prob = process_frame(os.path.basename(s_image_dirs),images,tmp_ALOCC_model)
-            #
-            # print('pseudocode test is finished')
+            print('--------------------------------------------------')
+            print('Load Pretrained Model...')
+            tmp_ALOCC_model.f_check_checkpoint()
 
-            # This code for just check output for readers
-            # ...
+            if FLAGS.dataset=='mnist':
+                mnist = input_data.read_data_sets(FLAGS.dataset_address)
+
+                specific_idx_anomaly = np.where(mnist.train.labels != 6)[0]
+                specific_idx = np.where(mnist.train.labels == 6)[0]
+                ten_precent_anomaly = [specific_idx_anomaly[x] for x in
+                                       random.sample(range(0, len(specific_idx_anomaly)), len(specific_idx) // 40)]
+
+                data = mnist.train.images[specific_idx].reshape(-1, 28, 28, 1)
+                tmp_data = mnist.train.images[ten_precent_anomaly].reshape(-1, 28, 28, 1)
+                data = np.append(data, tmp_data).reshape(-1, 28, 28, 1)
+
+                lst_prob = tmp_ALOCC_model.f_test_frozen_model(data[0:FLAGS.batch_size])
+                print('check is ok')
+                exit()
+                #generated_data = tmp_ALOCC_model.feed2generator(data[0:FLAGS.batch_size])
+            else:
+                data, labels = read_data.test_data(FLAGS.attention_label)
+                # np.random.shuffle(data)
+                lst_prob = tmp_ALOCC_model.f_test_frozen_model(data)
+                maxi = max(lst_prob)
+                mini = min(lst_prob)
+                average = (maxi+mini) / 2.0
+                print(average)
+                for x in range(len(lst_prob)):
+                    if lst_prob[x] > average:
+                        lst_prob[x] = 1
+                    else:
+                        lst_prob[x] = 0
+                C = confusion_matrix(labels, lst_prob)
+                print(C)
+                msg = "class_id: {}, ".format(FLAGS.attention_label) + "mean: {:.3f}\n".format(average[0]) + \
+                    'accuracy: {:.3f}, precision: {:.3f}, recall: {:.3f}, f1 score: {:.3f}\n'.format(
+                        # average,
+                        accuracy_score(labels, lst_prob),
+                        precision_score(labels, lst_prob, average='macro'),
+                        recall_score(labels, lst_prob, average='macro'),
+                        f1_score(labels, lst_prob, average='weighted')) + str(C)
+                acc += accuracy_score(labels, lst_prob) / 10.
+                pres += precision_score(labels, lst_prob, average='macro') / 10.
+                recall += recall_score(labels, lst_prob, average='macro') / 10.
+                f1 += f1_score(labels, lst_prob, average='weighted') / 10.
+
+                print(msg)
+                message.append(msg)
+                print("\n")
+                # logging.info(msg)
+                # print('check is ok')
+                # exit()
+
+    with open("print.txt", "w+") as f:
+        for msg in message:
+            f.write(msg)
+            f.write("\n")
+
+        result = 'accuracy: {:.3f}, precision: {:.3f}, recall: {:.3f}, f1 score: {:.3f}'.format(acc, pres, recall, f1)
+        f.write(result)
+        f.close()
+            # else in UCDS (depends on infrustructure)
+            # for s_image_dirs in sorted(glob(os.path.join(FLAGS.dataset_address, 'Test[0-9][0-9][0-9]'))):
+            #     tmp_lst_image_paths = []
+            #     if os.path.basename(s_image_dirs) not in ['Test004']:
+            #        print('Skip ',os.path.basename(s_image_dirs))
+            #        continue
+            #     for s_image_dir_files in sorted(glob(os.path.join(s_image_dirs + '/*'))):
+            #         if os.path.basename(s_image_dir_files) not in ['068.tif']:
+            #             print('Skip ', os.path.basename(s_image_dir_files))
+            #             continue
+            #         tmp_lst_image_paths.append(s_image_dir_files)
+
+
+                #random
+                #lst_image_paths = [tmp_lst_image_paths[x] for x in random.sample(range(0, len(tmp_lst_image_paths)), n_fetch_data)]
+                # lst_image_paths = tmp_lst_image_paths
+                # #images =read_lst_images(lst_image_paths,nd_patch_size,nd_patch_step,b_work_on_patch=False)
+                # images = read_lst_images_w_noise2(lst_image_paths, nd_patch_size, nd_patch_step)
+                #
+                # lst_prob = process_frame(os.path.basename(s_image_dirs),images,tmp_ALOCC_model)
+                #
+                # print('pseudocode test is finished')
+
+                # This code for just check output for readers
+                # ...
 
 def process_frame(s_name,frames_src,sess):
     nd_patch,nd_location = get_image_patches(frames_src,sess.patch_size,sess.patch_step)

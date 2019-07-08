@@ -53,7 +53,7 @@ def test_data(labels):
     specific_idx = np.where(train_labels == labels)[0]
     specific_idx_anomaly = np.where(train_labels != labels)[0]
     ten_precent_anomaly = [specific_idx_anomaly[x] for x in
-                                   random.sample(range(0, len(specific_idx_anomaly)), len(specific_idx_anomaly) // 10)]
+                                   random.sample(range(0, len(specific_idx_anomaly)), len(specific_idx_anomaly) // 9)]
     ten_precent_anomaly = np.array(ten_precent_anomaly)
 
     test_data1 = test_data[specific_idx]

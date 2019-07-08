@@ -404,9 +404,9 @@ class ALOCC_Model(object):
         print(" [*] Reading checkpoints...")
         self.saver = tf.train.Saver()
 
-        ckpt = tf.train.get_checkpoint_state(self.checkpoint_dir)
+        ckpt = tf.train.get_checkpoint_state(self.checkpoint_dir.replace("base0", "base{}".format(self.attention_label)))
         if ckpt and ckpt.model_checkpoint_path:
-            ckpt_name = os.path.basename(ckpt.model_checkpoint_path)
+            ckpt_name = os.path.basename("ALOCC_Model-11.model")
             self.saver.restore(self.sess, os.path.join(self.checkpoint_dir, ckpt_name))
             counter = int(next(re.finditer("(\d+)(?!.*\d)", ckpt_name)).group(0))
             print(" [*] Success to read {}".format(ckpt_name))
@@ -437,7 +437,7 @@ class ALOCC_Model(object):
         for i in xrange(0, batch_idxs):
             batch_data = tmp_lst_slices[i * self.batch_size:(i + 1) * self.batch_size]
 
-            results_g = self.sess.run(self.G, feed_dict={self.z: batch_data})
+            # results_g = self.sess.run(self.G, feed_dict={self.z: batch_data[0]})
             results_d = self.sess.run(self.D_, feed_dict={self.inputs: batch_data,
                                                           self.z: batch_data})
             # results = self.sess.run(self.sampler, feed_dict={self.z: batch_data})
@@ -447,15 +447,19 @@ class ALOCC_Model(object):
             #  scipy.misc.imsave('samples/{}_{}.jpg'.format(idx,results_d[idx][0]),batch_data[idx,:,:,0])
 
             lst_discriminator_v.extend(results_d)
-            lst_generated_img.extend(results_g)
+            # lst_generated_img.append(results_g)
             print('finish pp ... {}/{}'.format(i, batch_idxs))
 
+        np.random.shuffle(tmp_lst_slices)
+        data = tmp_lst_slices[0: self.batch_size]
+
+        results_g = self.sess.run(self.G, feed_dict={self.z: data})
         manifold_h = int(np.ceil(np.sqrt(results_g.shape[0])))
         manifold_w = int(np.floor(np.sqrt(results_g.shape[0])))
         save_images(results_g, [manifold_h, manifold_w],
-                    './' + self.sample_dir + '/ALOCC_generated.jpg')
-        save_images(tmp_lst_slices, [manifold_h, manifold_w],
-                    './' + self.sample_dir + '/ALOCC_input.jpg')
+                    './' + self.sample_dir + '/ALOCC_generated_{}.jpg'.format(self.attention_label))
+        save_images(data, [manifold_h, manifold_w],
+                    './' + self.sample_dir + '/ALOCC_input_{}.jpg'.format(self.attention_label))
 
         # lst_generated_img = (lst_generated_img + 1.) / 2.
         # tmp_lst_slices = (tmp_lst_slices + 1.) / 2.
