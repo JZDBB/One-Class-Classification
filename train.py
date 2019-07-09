@@ -9,7 +9,8 @@ flags.DEFINE_integer("epoch", 40, "Epoch to train [25]")
 flags.DEFINE_float("learning_rate", 0.0005, "Learning rate of for adam [0.0002]")
 flags.DEFINE_float("beta1", 0.5, "Momentum term of adam [0.5]")
 flags.DEFINE_integer("attention_label", 0, "Conditioned label that growth attention of training label [1]")
-flags.DEFINE_float("r_alpha", 0.02, "Refinement parameter [0.2]")
+flags.DEFINE_float("r_alpha", 1, "Refinement parameter [0.5]")
+flags.DEFINE_float("r_beta", 0.0001, "VAE parameter [0.0001]")
 flags.DEFINE_integer("train_size", 5000, "The size of train images [np.inf]")
 flags.DEFINE_integer("batch_size",128, "The size of batch images [64]")
 flags.DEFINE_integer("input_height", 32, "The size of image to use. [45]")
@@ -75,7 +76,7 @@ def main(_):
 
     for i in range(10):
         FLAGS.attention_label = i
-        FLAGS.sample_dir = 'export/' + FLAGS.dataset + '_%d_%d_base%d' % (nd_slice_size[0], nd_slice_size[1], i)
+        FLAGS.sample_dir = 'export/' + FLAGS.dataset + '_%d_%d_vae%d' % (nd_slice_size[0], nd_slice_size[1], i)
         check_some_assertions()
 
         # manual handling of GPU
@@ -95,6 +96,7 @@ def main(_):
                         sample_num=FLAGS.batch_size,
                         attention_label=FLAGS.attention_label,
                         r_alpha=FLAGS.r_alpha,
+                        r_beta=FLAGS.r_beta,
                         dataset_name=FLAGS.dataset,
                         dataset_address=FLAGS.dataset_address,
                         input_fname_pattern=FLAGS.input_fname_pattern,

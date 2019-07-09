@@ -15,7 +15,7 @@ class ALOCC_Model(object):
                  batch_size=128, sample_num=128, attention_label=1, is_training=True,
                  z_dim=100, gf_dim=16, df_dim=16, gfc_dim=512, dfc_dim=512, c_dim=3,
                  dataset_name=None, dataset_address=None, input_fname_pattern=None,
-                 checkpoint_dir=None, pre=False, pre_dir=None, log_dir=None, sample_dir=None, r_alpha=0.2,
+                 checkpoint_dir=None, pre=False, pre_dir=None, log_dir=None, sample_dir=None, r_alpha=0.2, r_beta=0.2,
                  kb_work_on_patch=True, nd_input_frame_size=(240, 360), nd_patch_size=(10, 10), n_stride=1,
                  n_fetch_data=10, n_per_itr_print_results=20):
         """
@@ -49,6 +49,7 @@ class ALOCC_Model(object):
         self.pre = pre
         self.pre_dir = pre_dir
         self.r_alpha = r_alpha
+        self.r_beta = r_beta
 
         self.batch_size = batch_size
         self.sample_num = sample_num
@@ -115,7 +116,7 @@ class ALOCC_Model(object):
 
         self.z = tf.placeholder(tf.float32, [self.batch_size] + image_dims, name='z')
 
-        self.G = self.generator(self.z)
+        z_mean, z_stddev, self.G = self.generator(self.z)
         self.D, self.D_logits = self.discriminator(inputs)
 
         self.sampler = self.sampler(self.z)
@@ -135,15 +136,20 @@ class ALOCC_Model(object):
         self.g_loss = tf.reduce_mean(
             tf.nn.sigmoid_cross_entropy_with_logits(logits=self.D_logits_, labels=tf.ones_like(self.D_)))
 
+        # VAE
+        self.kld_loss = -.5 * tf.reduce_sum(1. + z_stddev - tf.pow(z_mean, 2) - tf.exp(z_stddev))
+
         # Refinement loss
         self.g_r_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=self.G, labels=inputs)) # self.z change to inputs
-        self.g_loss = self.g_loss + self.g_r_loss * self.r_alpha
+
+        self.g_loss = self.g_loss + self.g_r_loss * self.r_alpha + self.kld_loss * self.r_beta
         self.d_loss = self.d_loss_real + self.d_loss_fake
 
         self.g_preloss_sum = scalar_summary("g_preloss", self.g_r_loss)
         self.d_loss_real_sum = scalar_summary("d_loss_real", self.d_loss_real)
         self.d_loss_fake_sum = scalar_summary("d_loss_fake", self.d_loss_fake)
         self.g_r_loss_sum = scalar_summary("g_r_loss", self.g_r_loss)
+        self.g_vae_sum = scalar_summary("vae_loss", self.kld_loss)
         self.g_loss_sum = scalar_summary("g_loss", self.g_loss)
         self.d_loss_sum = scalar_summary("d_loss", self.d_loss)
 
@@ -165,8 +171,8 @@ class ALOCC_Model(object):
 
         self.saver = tf.train.Saver(max_to_keep=50)
 
-        self.g_sum = merge_summary([self.d_loss_fake_sum, self.g_loss_sum, self.g_r_loss_sum])
-        self.g_presum = merge_summary([self.g_preloss_sum])
+        self.g_sum = merge_summary([self.d_loss_fake_sum, self.g_loss_sum, self.g_r_loss_sum, self.g_vae_sum])
+        self.g_presum = merge_summary([self.g_preloss_sum, self.g_vae_sum])
         self.d_sum = merge_summary([self.d_loss_real_sum, self.d_loss_sum])
 
         # self.model_dir = self.model_dir + '-' + str(self.attention_label)
@@ -318,8 +324,19 @@ class ALOCC_Model(object):
             hae1 = lrelu(self.g_bn5(conv2d(hae0, self.df_dim * 4, name='g_encoder_h1_conv')))
             hae2 = lrelu(self.g_bn6(conv2d(hae1, self.df_dim * 8, name='g_encoder_h2_conv')))
 
+            flat = tf.contrib.layers.flatten(hae2)  # output [batch, 4*4*64]
+
+            z_mean = tf.layers.dense(flat, units=128, name='g_z_mean')
+            z_stddev = tf.layers.dense(flat, units=128, name='g_z_stddev')
+
+            epsilon = tf.random_normal([self.batch_size, 128], 0, 1, dtype=tf.float32)
+            z_flat = z_mean + (tf.exp(z_stddev) * epsilon)
+
+            z_develop = tf.layers.dense(z_flat, units=4 * 4 * self.df_dim * 8, name='g_flat')
+            net = tf.nn.relu(tf.reshape(z_develop, [-1, 4, 4, self.df_dim * 8]))
+
             h2, self.h2_w, self.h2_b = deconv2d(
-                hae2, [self.batch_size, s_h4, s_w4, self.gf_dim * 2], name='g_decoder_h1', with_w=True)
+                net, [self.batch_size, s_h4, s_w4, self.gf_dim * 2], name='g_decoder_h1', with_w=True)
             h2 = tf.nn.relu(self.g_bn2(h2))
 
             h3, self.h3_w, self.h3_b = deconv2d(
@@ -329,7 +346,7 @@ class ALOCC_Model(object):
             h4, self.h4_w, self.h4_b = deconv2d(
                 h3, [self.batch_size, s_h, s_w, self.c_dim], name='g_decoder_h00', with_w=True)
 
-            return tf.nn.tanh(h4, name='g_output')
+            return z_mean, z_stddev, tf.nn.tanh(h4, name='g_output')
 
     # =========================================================================================================
     def sampler(self, z, y=None):
@@ -346,8 +363,19 @@ class ALOCC_Model(object):
             hae1 = lrelu(self.g_bn5(conv2d(hae0, self.df_dim * 4, name='g_encoder_h1_conv')))
             hae2 = lrelu(self.g_bn6(conv2d(hae1, self.df_dim * 8, name='g_encoder_h2_conv')))
 
+            flat = tf.contrib.layers.flatten(hae2)  # output [batch, 4*4*64]
+
+            z_mean = tf.layers.dense(flat, units=128, name='g_z_mean')
+            z_stddev = tf.layers.dense(flat, units=128, name='g_z_stddev')
+
+            epsilon = tf.random_normal([self.batch_size, 128], 0, 1, dtype=tf.float32)
+            z_flat = z_mean + (tf.exp(z_stddev) * epsilon)
+
+            z_develop = tf.layers.dense(z_flat, units=4 * 4 * self.df_dim * 8, name='g_flat')
+            net = tf.nn.relu(tf.reshape(z_develop, [-1, 4, 4, self.df_dim * 8]))
+
             h2, self.h2_w, self.h2_b = deconv2d(
-                hae2, [self.batch_size, s_h4, s_w4, self.gf_dim * 2], name='g_decoder_h1', with_w=True)
+                net, [self.batch_size, s_h4, s_w4, self.gf_dim * 2], name='g_decoder_h1', with_w=True)
             h2 = tf.nn.relu(self.g_bn2(h2))
 
             h3, self.h3_w, self.h3_b = deconv2d(
@@ -362,7 +390,7 @@ class ALOCC_Model(object):
     # =========================================================================================================
     @property
     def model_dir(self):
-        return "{}_{}_{}_{}_base{}".format(
+        return "{}_{}_{}_{}_vae{}".format(
             self.dataset_name, self.batch_size,
             self.output_height, self.output_width, self.attention_label)
 
@@ -404,9 +432,9 @@ class ALOCC_Model(object):
         print(" [*] Reading checkpoints...")
         self.saver = tf.train.Saver()
 
-        ckpt = tf.train.get_checkpoint_state(self.checkpoint_dir.replace("base0", "base{}".format(self.attention_label)))
+        ckpt = tf.train.get_checkpoint_state(self.checkpoint_dir.replace("vae0", "vae{}".format(self.attention_label)))
         if ckpt and ckpt.model_checkpoint_path:
-            ckpt_name = os.path.basename("ALOCC_Model-11.model")
+            ckpt_name = os.path.basename("ALOCC_Model-12.model")
             self.saver.restore(self.sess, os.path.join(self.checkpoint_dir, ckpt_name))
             counter = int(next(re.finditer("(\d+)(?!.*\d)", ckpt_name)).group(0))
             print(" [*] Success to read {}".format(ckpt_name))

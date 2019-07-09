@@ -19,6 +19,7 @@ flags.DEFINE_float("learning_rate", 0, "Learning rate of for adam [0.0002]")
 flags.DEFINE_float("beta1", 0.5, "Momentum term of adam [0.5]")
 flags.DEFINE_integer("attention_label", 0, "Conditioned label that growth attention of training label [1]")
 flags.DEFINE_float("r_alpha", 0.2, "Refinement parameter [0.2]")
+flags.DEFINE_float("r_beta", 0.2, "VAE parameter [0.2]")
 flags.DEFINE_integer("train_size", 5000, "The size of train images [np.inf]")
 flags.DEFINE_integer("batch_size", 128, "The size of batch images [64]")
 flags.DEFINE_integer("input_height", 45, "The size of image to use. [45]")
@@ -28,7 +29,7 @@ flags.DEFINE_integer("output_width", None, "The size of the output images to pro
 flags.DEFINE_string("dataset", "UCSD", "The name of dataset [UCSD, mnist]")
 flags.DEFINE_string("dataset_address", "./dataset/UCSD_Anomaly_Dataset.v1p2/UCSDped2/Test", "The path of dataset")
 flags.DEFINE_string("input_fname_pattern", "*", "Glob pattern of filename of input images [*]")
-flags.DEFINE_string("checkpoint_dir", "./checkpoint/cifar-10_128_32_32_base0/", "Directory name to save the checkpoints [checkpoint]")
+flags.DEFINE_string("checkpoint_dir", "./checkpoint/cifar-10_128_32_32_vae0/", "Directory name to save the checkpoints [checkpoint]")
 flags.DEFINE_string("log_dir", "log", "Directory name to save the log [log]")
 flags.DEFINE_string("sample_dir", "samples", "Directory name to save the image samples [samples]")
 flags.DEFINE_boolean("train", False, "True for training, False for testing [False]")
@@ -115,6 +116,7 @@ def main(_):
                         sample_num=FLAGS.batch_size,
                         attention_label=FLAGS.attention_label,
                         r_alpha=FLAGS.r_alpha,
+                        r_beta=FLAGS.r_beta,
                         is_training=FLAGS.train,
                         dataset_name=FLAGS.dataset,
                         dataset_address=FLAGS.dataset_address,
