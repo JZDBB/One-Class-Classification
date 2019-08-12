@@ -39,7 +39,7 @@ def read_data(labels):
     train_data = np.reshape(train_data, [-1, 32, 32, 3], 'F')
     # train_data = np.dot(train_data[..., :3], [0.299, 0.587, 0.114])
     # train_data = np.reshape(train_data, [-1, 32, 32, 1])
-    train_data = train_data / 128.0 - 1
+    train_data = train_data / 255.
     train_data = np.transpose(train_data, [0, 2, 1, 3])
     # train_data = (train_data - 128) /128.0
     return train_data

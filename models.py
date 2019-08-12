@@ -140,12 +140,14 @@ class ALOCC_Model(object):
         self.kld_loss = -.5 * tf.reduce_sum(1. + z_stddev - tf.pow(z_mean, 2) - tf.exp(z_stddev))
 
         # Refinement loss
-        self.g_r_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=self.G, labels=inputs)) # self.z change to inputs
+        self.g_r_loss = tf.reduce_sum(-self.inputs * tf.log(self.G + 1e-10) - (1.0 - self.inputs) * tf.log(1.0 - self.G + 1e-10))
+
+        self.pre_train_loss = self.g_r_loss * self.r_alpha + self.kld_loss * self.r_beta
 
         self.g_loss = self.g_loss + self.g_r_loss * self.r_alpha + self.kld_loss * self.r_beta
         self.d_loss = self.d_loss_real + self.d_loss_fake
 
-        self.g_preloss_sum = scalar_summary("g_preloss", self.g_r_loss)
+        self.g_preloss_sum = scalar_summary("g_preloss", self.pre_train_loss)
         self.d_loss_real_sum = scalar_summary("d_loss_real", self.d_loss_real)
         self.d_loss_fake_sum = scalar_summary("d_loss_fake", self.d_loss_fake)
         self.g_r_loss_sum = scalar_summary("g_r_loss", self.g_r_loss)
@@ -160,7 +162,7 @@ class ALOCC_Model(object):
 
     # =========================================================================================================
     def train(self, config):
-        g_pre_optim = tf.train.RMSPropOptimizer(config.learning_rate).minimize(self.g_r_loss, var_list=self.g_vars)
+        g_pre_optim = tf.train.RMSPropOptimizer(config.learning_rate).minimize(self.pre_train_loss, var_list=self.g_vars)
         d_optim = tf.train.RMSPropOptimizer(config.learning_rate).minimize(self.d_loss, var_list=self.d_vars)
         g_optim = tf.train.RMSPropOptimizer(config.learning_rate).minimize(self.g_loss, var_list=self.g_vars)
 
@@ -169,7 +171,7 @@ class ALOCC_Model(object):
         except:
             tf.initialize_all_variables().run()
 
-        self.saver = tf.train.Saver(max_to_keep=50)
+        self.saver = tf.train.Saver(max_to_keep=100)
 
         self.g_sum = merge_summary([self.d_loss_fake_sum, self.g_loss_sum, self.g_r_loss_sum, self.g_vae_sum])
         self.g_presum = merge_summary([self.g_preloss_sum, self.g_vae_sum])
@@ -187,7 +189,7 @@ class ALOCC_Model(object):
 
         # export images
         sample_inputs = np.array(sample).astype(np.float32)
-        sample_inputs = (sample_inputs + 1.) / 2.
+        # sample_inputs = (sample_inputs + 1.) / 2.
         scipy.misc.imsave('./{}/train_input_samples.jpg'.format(config.sample_dir), montage(sample_inputs[:, :, :]))
         # sample_inputs_noise = np.array(sample_w_noise).astype(np.float32)
         # scipy.misc.imsave('./{}/noise_input_samples.jpg'.format(config.sample_dir), montage(sample_inputs_noise[:, :, :]))
@@ -222,7 +224,7 @@ class ALOCC_Model(object):
                                                    feed_dict={self.inputs: batch_images, self.z: batch_images})
                     self.writer.add_summary(summary_str, counter)
 
-                    errG = self.g_r_loss.eval({self.inputs: batch_images, self.z: batch_images})
+                    errG = self.pre_train_loss.eval({self.inputs: batch_images, self.z: batch_images})
                     counter += 1
 
                     msg = "Epoch:[%2d][%4d/%4d]--> g_loss: %.8f" % (
@@ -234,14 +236,15 @@ class ALOCC_Model(object):
                         samples, g_loss = self.sess.run(
                             [self.sampler, self.g_r_loss],
                             feed_dict={
-                                self.z: sample_w_noise,
-                                self.inputs: sample_inputs
+                                self.z: sample,
+                                self.inputs: sample
                             }
                         )
-                        manifold_h = int(np.ceil(np.sqrt(samples.shape[0])))
-                        manifold_w = int(np.floor(np.sqrt(samples.shape[0])))
-                        save_images(samples, [manifold_h, manifold_w],
-                                    './{}/train_{:02d}_{:04d}.png'.format(config.sample_dir, epoch, idx))
+                        # manifold_h = int(np.ceil(np.sqrt(samples.shape[0])))
+                        # manifold_w = int(np.floor(np.sqrt(samples.shape[0])))
+                        # save_images(samples, [manifold_h, manifold_w],
+                        #             './{}/train_{:02d}_{:04d}.png'.format(config.sample_dir, epoch, idx))
+                        scipy.misc.imsave('./{}/train_{:02d}_{:04d}.png'.format(config.sample_dir, epoch, idx), montage(samples[:, :, :]))
                         print("[Sample] g_loss: %.8f" % (g_loss))
                 self.save(self.pre_dir, epoch)
         else:
@@ -289,10 +292,11 @@ class ALOCC_Model(object):
                                 self.inputs: sample_inputs
                             }
                         )
-                        manifold_h = int(np.ceil(np.sqrt(samples.shape[0])))
-                        manifold_w = int(np.floor(np.sqrt(samples.shape[0])))
-                        save_images(samples, [manifold_h, manifold_w],
-                                    './{}/train_{:02d}_{:04d}.png'.format(config.sample_dir, epoch, idx))
+                        # manifold_h = int(np.ceil(np.sqrt(samples.shape[0])))
+                        # manifold_w = int(np.floor(np.sqrt(samples.shape[0])))
+                        # save_images(samples, [manifold_h, manifold_w],
+                        #             './{}/train_{:02d}_{:04d}.png'.format(config.sample_dir, epoch, idx))
+                        scipy.misc.imsave('./{}/train_{:02d}_{:04d}.png'.format(config.sample_dir, epoch, idx), montage(samples[:, :, :]))
                         print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss))
 
                 self.save(config.checkpoint_dir, epoch)
@@ -346,7 +350,7 @@ class ALOCC_Model(object):
             h4, self.h4_w, self.h4_b = deconv2d(
                 h3, [self.batch_size, s_h, s_w, self.c_dim], name='g_decoder_h00', with_w=True)
 
-            return z_mean, z_stddev, tf.nn.tanh(h4, name='g_output')
+            return z_mean, z_stddev, tf.nn.sigmoid(h4, name='g_output')
 
     # =========================================================================================================
     def sampler(self, z, y=None):
@@ -385,7 +389,7 @@ class ALOCC_Model(object):
             h4, self.h4_w, self.h4_b = deconv2d(
                 h3, [self.batch_size, s_h, s_w, self.c_dim], name='g_decoder_h00', with_w=True)
 
-            return tf.nn.tanh(h4, name='g_output')
+            return tf.nn.sigmoid(h4, name='g_output')
 
     # =========================================================================================================
     @property
@@ -413,10 +417,10 @@ class ALOCC_Model(object):
 
         ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
         if ckpt and ckpt.model_checkpoint_path:
-            ckpt_name = os.path.basename(ckpt.model_checkpoint_path)
+            ckpt_name = os.path.basename("ALOCC_Model-30.model")
             self.saver.restore(self.sess, os.path.join(checkpoint_dir, ckpt_name))
             counter = int(next(re.finditer("(\d+)(?!.*\d)", ckpt_name)).group(0))
-            print(" [*] Success to read {}".format(ckpt_name))
+            print(" [*] Success to read {}".format(os.path.join(checkpoint_dir, ckpt_name)))
             return True, counter
         else:
             print(" [*] Failed to find a checkpoint")
@@ -432,12 +436,12 @@ class ALOCC_Model(object):
         print(" [*] Reading checkpoints...")
         self.saver = tf.train.Saver()
 
-        ckpt = tf.train.get_checkpoint_state(self.checkpoint_dir.replace("vae0", "vae{}".format(self.attention_label)))
+        ckpt = tf.train.get_checkpoint_state(self.checkpoint_dir)
         if ckpt and ckpt.model_checkpoint_path:
-            ckpt_name = os.path.basename("ALOCC_Model-12.model")
+            ckpt_name = os.path.basename("ALOCC_Model-50.model")
             self.saver.restore(self.sess, os.path.join(self.checkpoint_dir, ckpt_name))
             counter = int(next(re.finditer("(\d+)(?!.*\d)", ckpt_name)).group(0))
-            print(" [*] Success to read {}".format(ckpt_name))
+            print(" [*] Success to read {}".format(os.path.join(self.checkpoint_dir, ckpt_name)))
             could_load = True
             checkpoint_counter = counter
         else:

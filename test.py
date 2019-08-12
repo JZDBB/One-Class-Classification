@@ -22,9 +22,9 @@ flags.DEFINE_float("r_alpha", 0.2, "Refinement parameter [0.2]")
 flags.DEFINE_float("r_beta", 0.2, "VAE parameter [0.2]")
 flags.DEFINE_integer("train_size", 5000, "The size of train images [np.inf]")
 flags.DEFINE_integer("batch_size", 128, "The size of batch images [64]")
-flags.DEFINE_integer("input_height", 45, "The size of image to use. [45]")
+flags.DEFINE_integer("input_height", 32, "The size of image to use. [45]")
 flags.DEFINE_integer("input_width", None, "The size of image to use. If None, same value as input_height [None]")
-flags.DEFINE_integer("output_height", 45, "The size of the output images to produce [45]")
+flags.DEFINE_integer("output_height", 32, "The size of the output images to produce [45]")
 flags.DEFINE_integer("output_width", None, "The size of the output images to produce. If None, same value as output_height [None]")
 flags.DEFINE_string("dataset", "UCSD", "The name of dataset [UCSD, mnist]")
 flags.DEFINE_string("dataset_address", "./dataset/UCSD_Anomaly_Dataset.v1p2/UCSDped2/Test", "The path of dataset")
@@ -33,6 +33,8 @@ flags.DEFINE_string("checkpoint_dir", "./checkpoint/cifar-10_128_32_32_vae0/", "
 flags.DEFINE_string("log_dir", "log", "Directory name to save the log [log]")
 flags.DEFINE_string("sample_dir", "samples", "Directory name to save the image samples [samples]")
 flags.DEFINE_boolean("train", False, "True for training, False for testing [False]")
+flags.DEFINE_boolean("pretrain", True, "True for pretrain, False for training")
+flags.DEFINE_string("pre_dir", "pretrain", "Directory name to save the pretrain model [pretrain]")
 
 FLAGS = flags.FLAGS
 
@@ -45,8 +47,6 @@ def check_some_assertions():
     if FLAGS.output_width is None:
         FLAGS.output_width = FLAGS.output_height
 
-    if not os.path.exists(FLAGS.checkpoint_dir):
-        os.makedirs(FLAGS.checkpoint_dir)
     if not os.path.exists(FLAGS.sample_dir):
         os.makedirs(FLAGS.sample_dir)
 
@@ -61,22 +61,6 @@ def main(_):
     #nd_patch_size = (45, 45)
     n_stride = 10
     #FLAGS.checkpoint_dir = "./checkpoint/UCSD_128_45_45/"
-
-    #FLAGS.dataset = 'UCSD'
-    #FLAGS.dataset_address = './dataset/UCSD_Anomaly_Dataset.v1p2/UCSDped2/Test'
-    lst_test_dirs = ['Test004','Test005','Test006']
-
-    #DATASET PARAMETER : MNIST
-    #FLAGS.dataset = 'mnist'
-    #FLAGS.dataset_address = './dataset/mnist'
-    #nd_input_frame_size = (28, 28)
-    #nd_patch_size = (28, 28)
-    #FLAGS.checkpoint_dir = "./checkpoint/mnist_128_28_28/"
-
-    #FLAGS.input_width = nd_patch_size[0]
-    #FLAGS.input_height = nd_patch_size[1]
-    #FLAGS.output_width = nd_patch_size[0]
-    #FLAGS.output_height = nd_patch_size[1]
 
 
     check_some_assertions()
@@ -97,8 +81,11 @@ def main(_):
     f1 = 0
 
     for i in range(10):
+        FLAGS.checkpoint_dir = "result/checkpoint_step2/cifar-10_128_32_32_vae0/"
         FLAGS.attention_label = i
         FLAGS.sample_dir = 'samples/'
+        FLAGS.checkpoint_dir = FLAGS.checkpoint_dir.replace("vae0", "vae{}".format(FLAGS.attention_label))
+
 
         gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.1)
         run_config = tf.ConfigProto(gpu_options=gpu_options)
@@ -118,6 +105,8 @@ def main(_):
                         r_alpha=FLAGS.r_alpha,
                         r_beta=FLAGS.r_beta,
                         is_training=FLAGS.train,
+                        pre=FLAGS.pretrain,
+                        pre_dir=FLAGS.pre_dir,
                         dataset_name=FLAGS.dataset,
                         dataset_address=FLAGS.dataset_address,
                         input_fname_pattern=FLAGS.input_fname_pattern,
@@ -157,28 +146,29 @@ def main(_):
                 data, labels = read_data.test_data(FLAGS.attention_label)
                 # np.random.shuffle(data)
                 lst_prob = tmp_ALOCC_model.f_test_frozen_model(data)
-                maxi = max(lst_prob)
-                mini = min(lst_prob)
-                average = (maxi+mini) / 2.0
-                print(average)
+                # maxi = max(lst_prob)
+                # mini = min(lst_prob)
+                # average = (maxi+mini) / 2.0
+                # print(average)
+                best_th = np.mean(lst_prob)
                 for x in range(len(lst_prob)):
-                    if lst_prob[x] > average:
+                    if lst_prob[x] >= best_th:
                         lst_prob[x] = 1
                     else:
                         lst_prob[x] = 0
                 C = confusion_matrix(labels, lst_prob)
                 print(C)
-                msg = "class_id: {}, ".format(FLAGS.attention_label) + "mean: {:.3f}\n".format(average[0]) + \
+                msg = "class_id: {}, ".format(FLAGS.attention_label) + "threshold: {:.3f}\n".format(best_th) + \
                     'accuracy: {:.3f}, precision: {:.3f}, recall: {:.3f}, f1 score: {:.3f}\n'.format(
                         # average,
                         accuracy_score(labels, lst_prob),
-                        precision_score(labels, lst_prob, average='macro'),
-                        recall_score(labels, lst_prob, average='macro'),
-                        f1_score(labels, lst_prob, average='weighted')) + str(C)
+                        precision_score(labels, lst_prob, average='binary'),
+                        recall_score(labels, lst_prob, average='binary'),
+                        f1_score(labels, lst_prob, average='binary')) + str(C)
                 acc += accuracy_score(labels, lst_prob) / 10.
-                pres += precision_score(labels, lst_prob, average='macro') / 10.
-                recall += recall_score(labels, lst_prob, average='macro') / 10.
-                f1 += f1_score(labels, lst_prob, average='weighted') / 10.
+                pres += precision_score(labels, lst_prob, average='binary') / 10.
+                recall += recall_score(labels, lst_prob, average='binary') / 10.
+                f1 += f1_score(labels, lst_prob, average='binary') / 10.
 
                 print(msg)
                 message.append(msg)
@@ -195,41 +185,8 @@ def main(_):
         result = 'accuracy: {:.3f}, precision: {:.3f}, recall: {:.3f}, f1 score: {:.3f}'.format(acc, pres, recall, f1)
         f.write(result)
         f.close()
-            # else in UCDS (depends on infrustructure)
-            # for s_image_dirs in sorted(glob(os.path.join(FLAGS.dataset_address, 'Test[0-9][0-9][0-9]'))):
-            #     tmp_lst_image_paths = []
-            #     if os.path.basename(s_image_dirs) not in ['Test004']:
-            #        print('Skip ',os.path.basename(s_image_dirs))
-            #        continue
-            #     for s_image_dir_files in sorted(glob(os.path.join(s_image_dirs + '/*'))):
-            #         if os.path.basename(s_image_dir_files) not in ['068.tif']:
-            #             print('Skip ', os.path.basename(s_image_dir_files))
-            #             continue
-            #         tmp_lst_image_paths.append(s_image_dir_files)
 
 
-                #random
-                #lst_image_paths = [tmp_lst_image_paths[x] for x in random.sample(range(0, len(tmp_lst_image_paths)), n_fetch_data)]
-                # lst_image_paths = tmp_lst_image_paths
-                # #images =read_lst_images(lst_image_paths,nd_patch_size,nd_patch_step,b_work_on_patch=False)
-                # images = read_lst_images_w_noise2(lst_image_paths, nd_patch_size, nd_patch_step)
-                #
-                # lst_prob = process_frame(os.path.basename(s_image_dirs),images,tmp_ALOCC_model)
-                #
-                # print('pseudocode test is finished')
-
-                # This code for just check output for readers
-                # ...
-
-def process_frame(s_name,frames_src,sess):
-    nd_patch,nd_location = get_image_patches(frames_src,sess.patch_size,sess.patch_step)
-    frame_patches = nd_patch.transpose([1,0,2,3])
-    print('frame patches :{}\npatches size:{}'.format(len(frame_patches),(frame_patches.shape[1],frame_patches.shape[2])))
-
-    lst_prob = sess.f_test_frozen_model(frame_patches)
-
-    #  This code for just check output for readers
-    # ...
 
 # ---------------------------------------------------------------------------------------
 # ---------------------------------------------------------------------------------------
